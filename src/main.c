@@ -69,7 +69,7 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
     //     SDL_ExitWithError("Impossible de changer la couleur pour le rendu");
     
     // if (SDL_RenderDrawPoint(renderer, 400, 300) != 0)
-    //     SDL_ExitWithError("Impossible de dessiner un point");
+    //     SDL_ExitWithError ("Impossible de dessiner un point");
     
     /*----------------------------------------------------------------------------------*/
 

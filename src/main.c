@@ -14,6 +14,7 @@ pour généré un prog.exe sans fenetre de commande qui s'ouvre:
 #include <math.h>
 #include <time.h>
 
+
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
@@ -25,7 +26,7 @@ void SDL_ExitWithError(char* message);
 int main(int argc, char*argv[])
 {   
 
-    //Exemple de tableau issue de la fonction audio_to
+    //Exemple de tableau issue de la fonction audio_to_piano_notes
     int tab_temps[100];
     int tab_notes[100];
     srand(time(NULL));

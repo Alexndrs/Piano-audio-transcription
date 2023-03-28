@@ -64,23 +64,23 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
     if(SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer) != 0)
         SDL_ExitWithError("Impossible de creer la fenetre et le rendu");
 
-    /*-------------- Exemple Dessin d'un point:----------------------*/
+    /*-------------- Fonctions utiles en SDL:----------------------
 
-    // if (SDL_SetRenderDrawColor(renderer,150,159,255, SDL_ALPHA_OPAQUE) !=0 )
-    //     SDL_ExitWithError("Impossible de changer la couleur pour le rendu");
+    ####### Dessin d'un point coloré:
+
+    if (SDL_SetRenderDrawColor(renderer,150,159,255, SDL_ALPHA_OPAQUE) !=0 )
+        SDL_ExitWithError("Impossible de changer la couleur pour le rendu");
     
-    // if (SDL_RenderDrawPoint(renderer, 400, 300) != 0)
-    //     SDL_ExitWithError("Impossible de dessiner un point");
+    if (SDL_RenderDrawPoint(renderer, 400, 300) != 0)
+        SDL_ExitWithError("Impossible de dessiner un point");
     
-    /*----------------------------------------------------------------------------------*/
 
+    ####### Décompte du temps:
 
-
-    /*Fonction utile : 
-    
     SDL_GetTicks(); --> nb de milisecondes depuis SDL_init
+
     
-    */
+    ----------------------------------------------------------------------------------*/
 
 
     /*------------------Gestion d'Evenements------------------*/

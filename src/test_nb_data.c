@@ -21,7 +21,7 @@ struct wavfile //définit la structure de l entete d un wave
 };
 
 
-int nb_data(FILE *wav){
+void nb_data_Fe(FILE *wav, int* nb_data, float* Fe){
     //creation et initialisation du header
     struct wavfile header;
     
@@ -46,11 +46,12 @@ int nb_data(FILE *wav){
     }
 
     //Si tout se passe bien...
-    return((header.bytes_in_data/header.bytes_by_capture));
+    nb_data = (header.bytes_in_data/header.bytes_by_capture);
+    Fe = header.frequency;
 }
 
 
- void rempli_tab(FILE *wav, float** tab_temps, float** tab_amplitudes){
+void rempli_tab(FILE *wav, float** tab_temps, float** tab_amplitudes){
     //creation et initialisation du header
     struct wavfile header;
     
@@ -74,6 +75,23 @@ int nb_data(FILE *wav){
         return ;
     }
 
+void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
+{
+    float Te = 1/Fe;
+    for(k=0;k<nb_data;k++)
+    {
+        float t = k*Te;
+        if(t>t1 && t<t2)
+        {
+            amplitude_fenetree[k] = tab_amplitude[k]*(0.54 - 0.46 * cos(2*3.141592653589793*(t-t1)/(t2 - t1)));
+        }
+        else
+        { 
+            amplitude_fenetree[k] = 0;
+        }
+    }
+}
+
     /*---------------------remplissage des tableaux----------*/
     int i=0;
     short value=0;
@@ -96,10 +114,13 @@ int main(int argc, char *argv[]){
         {printf("Il faut entrer un et un seul fichier !\n"); return 0;} //Erreur de lecture -> le programme s'arrête
     
     char* nom_fichier = argv[1];
-    FILE *wav = fopen(nom_fichier,"rb");
+    FILE *wav = fopen(nom_fichier,"rb"); //ouverture du fichier wave
+
 
     printf("\n nom_fichier : %s\n", nom_fichier);
-    int len_tab = nb_data(wav);
+    int len_tab; // taille des tableaux
+    float Fe; // fréquence d'échantillonage
+    nb_data(wav,len_tab,Fe);
 
     printf("\n nombre d'echantillons : %d\n\n",len_tab);
 
@@ -112,6 +133,22 @@ int main(int argc, char *argv[]){
     wav = fopen(nom_fichier,"rb");
     rempli_tab(wav, &tab_temps, &tab_amplitudes);
 
+    // Boucle de traitement : fenetrage transformée de fourier, note...
+        //
+    float T_total = len_tab/Fe; // durée de l'enregistrement
+    float tau = 0.02;       // pas de décalage temporel entre 2 fenêtres (en secondes)
+    float t1 = 0;
+    float t2 = 0.2;
+    float* amplitude_fenetree[len_tab];
+    while (t2<T_total)
+    {
+        void fenetrage_hamming(tab_amplitudes,amplitude_fenetree,len_tab,Fe,t1,t2);
+        t1 = t1 + tau;
+        t2 = t2 + tau;
+        float* tab_frequence = malloc(sizeof(float)*len_tab);
+    }    
+{
+    
     //test
     for (int i = 0; i < 50; i++)
     {

@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <math.h>
 
-float* amplitude_fenetree[nbech];
 
 void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
 {

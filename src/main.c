@@ -6,6 +6,7 @@ Compilation dans le fichier ~/Piano-audio-transcription:
 pour généré un prog.exe sans fenetre de commande qui s'ouvre:
   gcc -Wall -Werror -Wfatal-errors src/main.c -o bin/prog.exe -I include -L lib -lmingw32 -lSDL2main -lSDL2 -mwindows -lm
 
+include GSL L- lib -lgslcblas -lgsl -lm -o bin/test.exe
 */
 
 #include <SDL.h>

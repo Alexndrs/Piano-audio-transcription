@@ -16,7 +16,7 @@ for k = 1:L/1000
     t1 = t - t_gap/2;
     t2 = t + t_gap/2;
     y_res = fenetrage_hamming(y,Fe,t1,t2);
-    %plot(tab_t,y_res);
+    plot(tab_t,y_res);
     %ylim([-1.5 1.5])
     pause(0.1);
     %% CALCUL DE LA TRANSFORMEE DE FOURIER

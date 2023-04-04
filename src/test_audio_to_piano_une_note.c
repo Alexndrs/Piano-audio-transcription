@@ -35,6 +35,6 @@ void audio_to_piano_une_note( ??? )
     sprintf (fichierdat,"%s.dat", fichieraudio);
     /*--------------fin de selection du fichier audio-------------------------------*/
 
-    int nbech= nb_data( ??? ); //nombre d echantillons extraits du fichier audio
+    int nbech= nb_data( FILE *wav ); //nombre d echantillons extraits du fichier audio
 
 }

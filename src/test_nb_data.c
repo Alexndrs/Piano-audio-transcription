@@ -86,9 +86,9 @@ void rempli_tab(FILE *wav, float** tab_temps, float** tab_amplitudes){
         i++;
     }
     /*-----------------fin de remplissage des tableaux-----------*/
- }
+}
 
- void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
+void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
 {
     float Te = 1/Fe;
     for(int k=0;k<nb_data;k++)
@@ -96,15 +96,37 @@ void rempli_tab(FILE *wav, float** tab_temps, float** tab_amplitudes){
         float t = k*Te;
         if(t>t1 && t<t2)
         {
-            amplitude_fenetree[k] = tab_amplitude[k]*(0.54 - 0.46 * cos(2*3.141592653589793*(t-t1)/(t2 - t1)));
+            (*amplitude_fenetree)[k] = tab_amplitude[k]*(0.54 - 0.46 * cos(2*3.141592653589793*(t-t1)/(t2 - t1)));
         }
         else
         { 
-            amplitude_fenetree[k] = 0;
+            (*amplitude_fenetree)[k] = 0;
         }
     }
 }
 
+float frequence_preponderante(float* tab_amplitude,float* tab_frequence,float seuil, int H, int len_tab)
+{
+    float fprep;
+    float amp_max = seuil;
+    float f;
+    float prod_spec;
+    for(int k = 0;k<(len_tab/H);k++)
+    {
+        f = tab_frequence[k];
+        prod_spec = 1;
+        for (int i = 1; i <= H; i++)
+        {
+            prod_spec = prod_spec*(REAL(tab_frequence,i*k)^2+IMAG(tab_frequence,i*k)^2);
+        }
+        if(log10(prod_spec) > amp_max)
+        {
+            amp_max = log10(prod_spec);
+            fprep = f;
+        }
+    }
+    return (fprep); 
+}
 
 
 int main(int argc, char *argv[]){
@@ -127,11 +149,11 @@ int main(int argc, char *argv[]){
     if (len_tab == -1){return 0;} //Erreur de lecture -> le programme s'arrête
 
     float* tab_temps = malloc(sizeof(float) * len_tab);
-    float* tab_amplitudes = malloc(sizeof(float) * len_tab);
-    if (tab_temps == NULL || tab_amplitudes == NULL){printf("Données trop volumineuses\n"); return 0;}
+    float* tab_amplitude = malloc(sizeof(float) * len_tab);
+    if (tab_temps == NULL || tab_amplitude == NULL){printf("Données trop volumineuses\n"); return 0;}
 
     wav = fopen(nom_fichier,"rb");
-    rempli_tab(wav, &tab_temps, &tab_amplitudes);
+    rempli_tab(wav, &tab_temps, &tab_amplitude);
 
     // Boucle de traitement : fenetrage transformée de fourier, note...
         //
@@ -139,18 +161,18 @@ int main(int argc, char *argv[]){
     float tau = 0.02;       // pas de décalage temporel entre 2 fenêtres (en secondes)
     float t1 = 0;
     float t2 = 0.2;
-    float* amplitude_fenetree = malloc(sizeof(float)*len_tab);
+    float** amplitude_fenetree = malloc(sizeof(float)*len_tab);
     float* tab_frequence = malloc(sizeof(float)*len_tab);
-    for(int k = 0)
+    for(int k = 0,k<len_tab,k++){tab_frequence[k]=k;}
     float* amplitude_fourier = malloc(sizeof(float)*len_tab);
     while (t2<T_total)
     {
         // Fenetrage
-        void fenetrage_hamming(tab_amplitudes,&(amplitude_fenetree),len_tab,Fe,t1,t2);
+        void fenetrage_hamming(tab_amplitude, amplitude_fenetree,len_tab,Fe,t1,t2);
         t1 = t1 + tau;
         t2 = t2 + tau;
         // Transformée de fourier (alexandre c'est pour toi)
-        
+        //utilise le tableau amplitude fourier stp, c'est lui que j'ai utilisé pour déterminer la fonction
 
         // Détection de la fréquence
         int H = 5; // nombre d'harmoniques qu'on étudie
@@ -167,4 +189,5 @@ int main(int argc, char *argv[]){
     }
 
     return 0;
+}
 }

@@ -16,7 +16,7 @@ void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_
         }
         else
         { 
-            amplitude_fenetree[k] = 0;
+            (*amplitude_fenetree[)k] = 0;
         }
     }
 }

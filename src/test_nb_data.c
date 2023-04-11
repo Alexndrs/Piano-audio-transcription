@@ -75,23 +75,6 @@ void rempli_tab(FILE *wav, float** tab_temps, float** tab_amplitudes){
         return ;
     }
 
-void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
-{
-    float Te = 1/Fe;
-    for(k=0;k<nb_data;k++)
-    {
-        float t = k*Te;
-        if(t>t1 && t<t2)
-        {
-            amplitude_fenetree[k] = tab_amplitude[k]*(0.54 - 0.46 * cos(2*3.141592653589793*(t-t1)/(t2 - t1)));
-        }
-        else
-        { 
-            amplitude_fenetree[k] = 0;
-        }
-    }
-}
-
     /*---------------------remplissage des tableaux----------*/
     int i=0;
     short value=0;
@@ -104,6 +87,23 @@ void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_
     }
     /*-----------------fin de remplissage des tableaux-----------*/
  }
+
+ void fenetrage_hamming(float* tab_amplitude, float** amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
+{
+    float Te = 1/Fe;
+    for(int k=0;k<nb_data;k++)
+    {
+        float t = k*Te;
+        if(t>t1 && t<t2)
+        {
+            amplitude_fenetree[k] = tab_amplitude[k]*(0.54 - 0.46 * cos(2*3.141592653589793*(t-t1)/(t2 - t1)));
+        }
+        else
+        { 
+            amplitude_fenetree[k] = 0;
+        }
+    }
+}
 
 
 
@@ -139,13 +139,24 @@ int main(int argc, char *argv[]){
     float tau = 0.02;       // pas de décalage temporel entre 2 fenêtres (en secondes)
     float t1 = 0;
     float t2 = 0.2;
-    float* amplitude_fenetree[len_tab];
+    float* amplitude_fenetree = malloc(sizeof(float)*len_tab);
+    float* tab_frequence = malloc(sizeof(float)*len_tab);
+    for(int k = 0)
+    float* amplitude_fourier = malloc(sizeof(float)*len_tab);
     while (t2<T_total)
     {
-        void fenetrage_hamming(tab_amplitudes,amplitude_fenetree,len_tab,Fe,t1,t2);
+        // Fenetrage
+        void fenetrage_hamming(tab_amplitudes,&(amplitude_fenetree),len_tab,Fe,t1,t2);
         t1 = t1 + tau;
         t2 = t2 + tau;
-        float* tab_frequence = malloc(sizeof(float)*len_tab);
+        // Transformée de fourier (alexandre c'est pour toi)
+        
+
+        // Détection de la fréquence
+        int H = 5; // nombre d'harmoniques qu'on étudie
+        float seuil = 50; //seul en dB pour l'étude des fréquences
+        float fprep = frequence_preponderante(amplitude_fourier,tab_frequence,seuil,H,len_tab);
+
     }    
 {
     

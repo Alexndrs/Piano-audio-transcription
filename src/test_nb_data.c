@@ -155,22 +155,20 @@ int main(int argc, char *argv[]){
     wav = fopen(nom_fichier,"rb");
     rempli_tab(wav, &tab_temps, &tab_amplitude);
 
-    // Boucle de traitement : fenetrage transformée de fourier, note...
-        //
+    // Boucle de traitement : fenetrage, transformée de fourier, fréquence détectée
     float T_total = len_tab/Fe; // durée de l'enregistrement
     float tau = 0.02;       // pas de décalage temporel entre 2 fenêtres (en secondes)
     float t1 = 0;
     float t2 = 0.2;
-    float** amplitude_fenetree = malloc(sizeof(float)*len_tab);
+    float* amplitude_fenetree = malloc(sizeof(float)*len_tab);
     float* tab_frequence = malloc(sizeof(float)*len_tab);
     for(int k = 0,k<len_tab,k++){tab_frequence[k]=k;}
     float* amplitude_fourier = malloc(sizeof(float)*len_tab);
     while (t2<T_total)
     {
         // Fenetrage
-        void fenetrage_hamming(tab_amplitude, amplitude_fenetree,len_tab,Fe,t1,t2);
-        t1 = t1 + tau;
-        t2 = t2 + tau;
+        fenetrage_hamming(tab_amplitude, &amplitude_fenetree, len_tab, Fe, t1, t2);
+
         // Transformée de fourier (alexandre c'est pour toi)
         //utilise le tableau amplitude fourier stp, c'est lui que j'ai utilisé pour déterminer la fonction
 
@@ -179,6 +177,10 @@ int main(int argc, char *argv[]){
         float seuil = 50; //seul en dB pour l'étude des fréquences
         float fprep = frequence_preponderante(amplitude_fourier,tab_frequence,seuil,H,len_tab);
 
+        // Mise des notes dans un tableau
+        
+        t1 = t1 + tau;
+        t2 = t2 + tau;
     }    
 {
     

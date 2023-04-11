@@ -31,10 +31,10 @@ for k = 1:L/1000
     %% CALCUL DE FMAX
     H = 5;
     seuil = 30;
-    f_res = fmax(TF, H, tab_f, seuil)
+    f_res = fmax(TF, H, tab_f, seuil);
     title(['f : ',num2str(f_res),'/// t : ',num2str(t)]);
     xlim([0 1000])
     ylim([0 2000])
-    pause(0.01);
+    pause(0.001);
 end
 

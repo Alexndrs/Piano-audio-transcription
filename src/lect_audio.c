@@ -57,7 +57,7 @@ void nb_data_Fe(FILE *wav, int* p_nb_data, float* p_Fe){
 
 
 
-void rempli_tab(FILE *wav, float* tab_temps, float* tab_amplitudes){
+void rempli_tab(FILE *wav, float* tab_temps, short* tab_amplitudes){
     //creation et initialisation du header
     struct wavfile header;
     
@@ -83,11 +83,36 @@ void rempli_tab(FILE *wav, float* tab_temps, float* tab_amplitudes){
 
     //Remplissage du tableau
     int i=0;
-    float value=0;
+    short value=0;
     while(fread(&value,(header.bits_per_sample)/8,1,wav)){
         //lecture des echantillons et enregistrement dans le tableau (en dB)
-        tab_amplitudes[i] = 20*log10(value);
+        tab_amplitudes[i] = 20*log10(fabs(value));
         tab_temps[i] = 1.*i/header.frequency;
         i++;
     }
 }
+
+
+/*
+int main(){
+    char* nom_fichier = "test_audio.wav";
+    FILE *wav = fopen(nom_fichier,"rb");
+    printf("\n nom_fichier : %s\n", nom_fichier);
+    int len_tab;
+    float Fe;
+    nb_data_Fe(wav, &len_tab, &Fe);
+    printf("\n nombre d'echantillons et fréquence : %d, %f\n\n",len_tab,Fe);
+    if (len_tab == -1){return 0;} //Erreur de lecture -> le programme s'arrête
+
+
+
+    //  RECUPERATION DES TEMPS D'ECHANTILLONAGE ET DES AMPLITUDES ASSOCIEES
+    float* tab_temps = malloc(sizeof(float) * len_tab);
+    short* tab_amplitude = malloc(sizeof(float) * len_tab);
+    if (tab_temps == NULL || tab_amplitude == NULL){printf("Données trop volumineuses\n"); return 0;}
+    wav = fopen(nom_fichier,"rb");
+    rempli_tab(wav, tab_temps, tab_amplitude);
+
+    for(int i = 0; i < 200; i++){printf("t=%f, Amp=%f\n",tab_temps[i],tab_amplitude[i]);}
+}
+*/

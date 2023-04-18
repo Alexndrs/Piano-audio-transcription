@@ -1,6 +1,10 @@
 %% LECTURE DU FICHIER AUDIO
 
-[y,Fe] = audioread('do re mi fa so la.wav');
+[y,Fe] = audioread('test_audio.wav');
+
+ylog = 20*log10(abs(y(:))) + 90;
+
+
 
 %y -> tableau des valeur du signal normalisés entre -1 et 1
 %Fs -> fréquence d'échantillonage

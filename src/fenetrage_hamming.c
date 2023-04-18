@@ -4,10 +4,10 @@
 #include <math.h>
 
 
-void fenetrage_hamming(float* tab_amplitude, float* amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
+void fenetrage_hamming(short* tab_amplitude, short* amplitude_fenetree, int nb_data, float Fe, float t1, float t2)
 {
     float Te = 1/Fe;
-    for(int k=0;k<nb_data;k++)
+    for(int k=0; k < nb_data; k++)
     {
         float t = k*Te;
         if(t>t1 && t<t2)

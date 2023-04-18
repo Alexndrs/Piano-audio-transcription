@@ -7,27 +7,7 @@
 #define REAL(z,i) ((z)[2*(i)])
 #define IMAG(z,i) ((z)[2*(i)+1])
 
-void FourierTransform(float* tab_amplitudes_temporel,int nb_data, double* tab_amplitude_frequenciel);
-
-/*
-int main ()
-{
-  float tab[44000];
-  for (int i = 0; i < 44000; i++){
-    tab[i] = i;
-  }
-
-  double* tab_amplitude_frequenciel = malloc(2*44000*sizeof(double)); //nombres comples (2 floats pour partie réelle et imaginaire)
-  FourierTransform(tab,44000, tab_amplitude_frequenciel);
-  for (int i = 0; i < 44000; i++){
-    printf("i: %d , A(t)=%f,    A(f)=(%f)+i(%f)\n",i, tab[i], REAL(tab_amplitude_frequenciel,i), IMAG(tab_amplitude_frequenciel,i));
-  }
-  free(tab_amplitude_frequenciel);
-  return 0;
-}
-*/
-
-void FourierTransform(float* tab_amplitudes_temporel, int nb_data, double* tab_amplitude_frequenciel){
+void FourierTransform(short* tab_amplitudes_temporel, int nb_data, double* tab_amplitude_frequenciel){
   /*Transformée de Fourier d'un tableau d'amplitudes*/
 
   gsl_fft_complex_wavetable* wavetable;
@@ -47,3 +27,21 @@ void FourierTransform(float* tab_amplitudes_temporel, int nb_data, double* tab_a
   gsl_fft_complex_wavetable_free(wavetable);
   gsl_fft_complex_workspace_free(workspace);
 }
+
+/*
+int main ()
+{
+  float tab[44000];
+  for (int i = 0; i < 44000; i++){
+    tab[i] = i;
+  }
+
+  double* tab_amplitude_frequenciel = malloc(2*44000*sizeof(double)); //nombres comples (2 floats pour partie réelle et imaginaire)
+  FourierTransform(tab,44000, tab_amplitude_frequenciel);
+  for (int i = 0; i < 44000; i++){
+    printf("i: %d , A(t)=%f,    A(f)=(%f)+i(%f)\n",i, tab[i], REAL(tab_amplitude_frequenciel,i), IMAG(tab_amplitude_frequenciel,i));
+  }
+  free(tab_amplitude_frequenciel);
+  return 0;
+}
+*/

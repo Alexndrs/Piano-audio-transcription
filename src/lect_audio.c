@@ -4,8 +4,6 @@
 #include <math.h>
 
 
-
-
 struct wavfile //définit la structure de l entete d un wave
 {
     char        id[4];          // doit contenir "RIFF"
@@ -24,129 +22,72 @@ struct wavfile //définit la structure de l entete d un wave
 
 
 
-int main(int argc, char *argv[])
-{
+void nb_data_Fe(FILE *wav, int* p_nb_data, float* p_Fe){
+    //creation et initialisation du header
+    struct wavfile header;
+    
 
-
-    int i=0;
-    int nbech=0; //nombre d echantillons extraits du fichier audio
-    char fichieraudio[100];
-    char fichierdat[100];
-    //float filtre_freq, filtre_large;
-
-
-    /*---------------------selection du fichier audio-------------------------------*/
-    printf ("entrer le nom du fichier audio a extraire en data :\n");
-    scanf("%s", fichieraudio);
-    printf ("nom du fichier : %s\n", fichieraudio);
-    sprintf (fichierdat,"%s.dat", fichieraudio);
-    /*--------------fin de selection du fichier audio-------------------------------*/
-
-
-
-    /*---------------------ouverture du wave----------------------------------------*/
-    FILE *wav = fopen(fichieraudio,"rb"); //ouverture du fichier wave
-    struct wavfile header; //creation du header
-
-    if ( wav == NULL )
-    {
+    //Gestion des erreurs de lecture
+    if ( wav == NULL ){
         printf("\nne peut pas ouvrir le fichier demande, verifier le nom\n");
         printf("ne pas oublier l'extention .wav\n");
-        exit(1);
+        *p_nb_data = -1;
+        return;
     }
-    /*---------------------fin de ouverture du wave---------------------------------*/
-
-
-
-    /*---------------------lecture de l entete et enregistrement dans header--------*/
-    //initialise le header par l'entete du fichier wave
-    //verifie que le fichier posséde un entete compatible
-    if ( fread(&header,sizeof(header),1,wav) < 1 )
-    {
+    if ( fread(&header,sizeof(header),1,wav) < 1 ){
         printf("\nne peut pas lire le header\n");
-        exit(1);
+        *p_nb_data = -1;
+        return;
     }
-    if (    header.id[0] != 'R'|| header.id[1] != 'I'|| header.id[2] != 'F'|| header.id[3] != 'F' )
-    {
+    if ((header.id[0] != 'R')||(header.id[1] != 'I')||(header.id[2] != 'F')||(header.id[3] != 'F')){
         printf("\nerreur le fichier n'est pas un format wave valide\n");
-        exit(1);
+        *p_nb_data = -1;
+        return;
     }
-    if (header.channels!=1)
-    {
+    if (header.channels!=1){
         printf("\nerreur : le fichier n'est pas mono\n");
-        exit(1);
-    }
-    /*----------------fin de lecture de l entete et enregistrement dans header-------*/
-
-
-
-    /*-------------------------determiner la taille des tableaux---------------------*/
-    nbech=(header.bytes_in_data/header.bytes_by_capture);
-    /*------------------fin de determiner la taille des tableaux---------------------*/
-
-
-
-    /*---------------------creation des tableaux dynamiques--------------------------*/
-    float *data=NULL; //tableau de l'onde temporelle
-    data=malloc( (nbech) * sizeof(float));
-    if (data == NULL)
-    {
-        exit(0);
+        *p_nb_data = -1;
+        return;
     }
 
-    /*---------------------fin de creation des tableaux dynamiques-------------------*/
+    //Si tout se passe bien...
+    *p_nb_data = (header.bytes_in_data/header.bytes_by_capture);
+    *p_Fe = header.frequency;
+}
 
 
 
-    /*---------------------initialisation des tableaux dynamiques--------------------*/
-    for(i=0; i<nbech; i++)
-    {
-        data[i]=0;
+void rempli_tab(FILE *wav, float* tab_temps, float* tab_amplitudes){
+    //creation et initialisation du header
+    struct wavfile header;
+    
+
+    //Gestion des erreurs de lecture
+    if ( wav == NULL ){
+        printf("\nne peut pas ouvrir le fichier demande, verifier le nom\n");
+        printf("ne pas oublier l'extention .wav\n");
+        return ;
     }
-    /*---------------------fin de initialisation des tableaux dynamiques-------------*/
+    if ( fread(&header,sizeof(header),1,wav) < 1 ){
+        printf("\nne peut pas lire le header\n");
+        return ;
+    }
+    if ((header.id[0] != 'R')||(header.id[1] != 'I')||(header.id[2] != 'F')||(header.id[3] != 'F')){
+        printf("\nerreur le fichier n'est pas un format wave valide\n");
+        return ;
+    }
+    if (header.channels!=1){
+        printf("\nerreur : le fichier n'est pas mono\n");
+        return ;
+    }
 
-
-
-    /*---------------------remplissage du tableau tab avec les echantillons----------*/
-    i=0;
+    //Remplissage du tableau
+    int i=0;
     short value=0;
-//    FILE *dat=fopen("son.dat","w"); //fichier data des echantillons
-//    FILE *dat2=fopen("fabs_son.dat","w");//fichier.dat des valeurs absolues des echantillons
-    FILE *dat3=fopen(fichierdat,"w");
-    while( fread(&value,(header.bits_per_sample)/8,1,wav) )
-    {
-        //lecture des echantillons et enregistrement dans le tableau
-        data[i]=value;
+    while(fread(&value,(header.bits_per_sample)/8,1,wav)){
+        //lecture des echantillons et enregistrement dans le tableau (en dB)
+        tab_amplitudes[i] = 20*log10(value);
+        tab_temps[i] = 1.*i/header.frequency;
         i++;
     }
-    printf("\nnombre d'echantillons lus : %d\n",i);
-    printf("nombre de valeurs sauvegardees %d\n",i);
-    for (i=0; i<nbech; i++)
-    {
-//        fprintf(dat,"%lf %lf\n", data[i], (1.*i/header.frequency));
-//permet de sauvegarder le tableau dans le fichier data.dat pour vérification manuelle des données
-//        fprintf(dat2,"%lf %lf\n", fabs(data[i]), (1.*i/header.frequency));
-        fprintf(dat3,"%lf %lf\n", 20*log10(fabs(data[i])), (1.*i/header.frequency));
-    }
-    /*-----------------fin de remplissage du tableau avec les echantillons-----------*/
-
-
-
-
-
-
-    /*---------------------liberation de la memoire----------------------------------*/
-    //liberation de la ram des malloc
-
-    free(data);
-    data = NULL;
-    fclose(wav);
-//    fclose(dat);
-//    fclose(dat2);
-    fclose(dat3);
-    /*---------------------fin de liberation de la memoire---------------------------*/
-
-
-
-    return 0;
 }

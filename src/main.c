@@ -24,6 +24,7 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes);
 
 void SDL_ExitWithError(char* message);
 
+
 int main(int argc, char*argv[])
 {   
 
@@ -35,6 +36,8 @@ int main(int argc, char*argv[])
         tab_temps[i-1] = 100*i;
         tab_notes[i-1] = (rand() % 89);
     }
+
+    //Affichage graphique
     piano_notes_to_video(tab_temps, tab_notes, 100);
 
     return 0;
@@ -80,7 +83,6 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
 
     SDL_GetTicks(); --> nb de milisecondes depuis SDL_init
 
-    
     ----------------------------------------------------------------------------------*/
 
 

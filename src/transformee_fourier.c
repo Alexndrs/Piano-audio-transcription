@@ -7,35 +7,43 @@
 #define REAL(z,i) ((z)[2*(i)])
 #define IMAG(z,i) ((z)[2*(i)+1])
 
-void FourierTransform(float* tab_amplitudes_temporel,int nb_data, double* ptab_amplitude_frequenciel);
+void FourierTransform(float* tab_amplitudes_temporel,int nb_data, double* tab_amplitude_frequenciel);
 
-
+/*
 int main ()
 {
-
-  float tab[128];
-  for (int i = 0; i < 128; i++){
+  float tab[44000];
+  for (int i = 0; i < 44000; i++){
     tab[i] = i;
   }
 
-  double* tab_amplitude_frequenciel = malloc(2*128*sizeof(double)); //nombres comples (2 floats pour partie réelle et imaginaire)
-  FourierTransform(tab,128, tab_amplitude_frequenciel);
-  for (int i = 0; i < 128; i++){
-    printf ("A(t)=%f,    A(f)=(%f)+i(%f)\n", tab[i], REAL(tab_amplitude_frequenciel,i), IMAG(tab_amplitude_frequenciel,i));
+  double* tab_amplitude_frequenciel = malloc(2*44000*sizeof(double)); //nombres comples (2 floats pour partie réelle et imaginaire)
+  FourierTransform(tab,44000, tab_amplitude_frequenciel);
+  for (int i = 0; i < 44000; i++){
+    printf("i: %d , A(t)=%f,    A(f)=(%f)+i(%f)\n",i, tab[i], REAL(tab_amplitude_frequenciel,i), IMAG(tab_amplitude_frequenciel,i));
   }
   free(tab_amplitude_frequenciel);
   return 0;
 }
+*/
 
+void FourierTransform(float* tab_amplitudes_temporel, int nb_data, double* tab_amplitude_frequenciel){
+  /*Transformée de Fourier d'un tableau d'amplitudes*/
 
-
-void FourierTransform(float* tab_amplitudes_temporel, int nb_data, double* ptab_amplitude_frequenciel){
-  /*Transformée de Fourier d'un tableau d'amplitude*/
+  gsl_fft_complex_wavetable* wavetable;
+  gsl_fft_complex_workspace* workspace;
 
   for (int i = 0; i < nb_data; i++) {
-      REAL(ptab_amplitude_frequenciel, i) = tab_amplitudes_temporel[i];
-      IMAG(ptab_amplitude_frequenciel, i) = 0.0;
+      REAL(tab_amplitude_frequenciel, i) = tab_amplitudes_temporel[i];
+      IMAG(tab_amplitude_frequenciel, i) = 0.0;
   }
 
-  gsl_fft_complex_radix2_forward(ptab_amplitude_frequenciel, 1, nb_data);
+  wavetable = gsl_fft_complex_wavetable_alloc(nb_data);
+  workspace = gsl_fft_complex_workspace_alloc(nb_data);
+
+  gsl_fft_complex_forward(tab_amplitude_frequenciel, 1, nb_data, wavetable, workspace);
+
+
+  gsl_fft_complex_wavetable_free(wavetable);
+  gsl_fft_complex_workspace_free(workspace);
 }

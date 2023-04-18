@@ -83,7 +83,7 @@ void rempli_tab(FILE *wav, float* tab_temps, float* tab_amplitudes){
 
     //Remplissage du tableau
     int i=0;
-    short value=0;
+    float value=0;
     while(fread(&value,(header.bits_per_sample)/8,1,wav)){
         //lecture des echantillons et enregistrement dans le tableau (en dB)
         tab_amplitudes[i] = 20*log10(value);

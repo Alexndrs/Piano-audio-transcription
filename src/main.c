@@ -374,7 +374,7 @@ int main(int argc, char* argv[]){
 
     // Boucle de traitement : fenetrage, transformée de fourier, fréquence détectée
     float T_total = len_tab/Fe; // durée de l'enregistrement
-    float tau = 0.05;       // pas de décalage temporel entre 2 fenêtres (en secondes)
+    float tau = 0.2;       // pas de décalage temporel entre 2 fenêtres (en secondes)
     float t1 = 0.2;
     float t2 = 0.4;
     float* tab_frequence = malloc(sizeof(float)*len_tab);
@@ -408,27 +408,19 @@ int main(int argc, char* argv[]){
     free(tab_temps);
     free(tab_amplitude);
 
+
+    //Test de l'affichage graphique sur des notes aléatoires
+        printf("\n\n");
+    //Exemple de tableau issue de la fonction audio_to_piano_notes
+    int tab_temps_notes[100];
+    int tab_notes[100];
+    srand(time(NULL));
+    for (int i = 1; i <= 100; i++){
+        tab_temps_notes[i-1] = 100*i;
+        tab_notes[i-1] = (rand() % 89);
+    }
+    //Affichage graphique
+    piano_notes_to_video(tab_temps_notes, tab_notes, 100);
+
     return 0;
 }
-
-
-// int main(int argc, char*argv[])
-// {   
-
-//     printf("test\n");
-//     //Exemple de tableau issue de la fonction audio_to_piano_notes
-//     int tab_temps[100];
-//     int tab_notes[100];
-//     srand(time(NULL));
-//     for (int i = 1; i <= 100; i++){
-//         tab_temps[i-1] = 100*i;
-//         tab_notes[i-1] = (rand() % 89);
-//     }
-
-//     //Affichage graphique
-//     piano_notes_to_video(tab_temps, tab_notes, 100);
-
-//     return 0;
-// }
-
-

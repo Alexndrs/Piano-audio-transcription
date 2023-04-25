@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 
-void passe_bande(int nb_data, double* tab_amplitude_frequenciel, float fprep, float Fe)
+void coupe_bande(int nb_data, double* tab_amplitude_frequenciel, float fprep, float Fe)
 {
     // On se propose de simplement mettre des zéros sur une bande de +/- 10 Hz autour de la fréquence qu'on souhaite éliminer
     int kprep = fprep*nb_data/Fe;

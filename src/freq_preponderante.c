@@ -25,7 +25,7 @@ float frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, i
         {
             amp_max = log10(prod_spec);
             fprep = f;
-            printf("%f\n",f);
+            printf("fprep : %f, amp_max : %f\n",f,amp_max);
         }
     }
     if (fprep == -1){printf("Il ne s'est rien passé\n");}

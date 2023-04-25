@@ -105,6 +105,8 @@ void rempli_tab(FILE *wav, float* tab_temps, short* tab_amplitudes){
     while(fread(&value,(header.bits_per_sample)/8,1,wav)){
         //lecture des echantillons et enregistrement dans le tableau (en dB)
         tab_amplitudes[i] = 20*log10(fabs(value));
+        if (tab_amplitudes[i] < 0)
+            tab_amplitudes[i] = 0;
         tab_temps[i] = 1.*i/header.frequency;
         i++;
     }
@@ -165,7 +167,7 @@ void FourierTransform(short* tab_amplitudes_temporel, int nb_data, double* tab_a
 float frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int len_tab)
 {
     float fprep = -1;
-    float amp_max = 0;
+    float amp_max = seuil;
     float f;
     float prod_spec;
     for(int k = 40*(242765./44100); k < (len_tab/H) ;k++) //C'est la première fréquence audible tel que (k/len_tab)*Fe > 20Hz
@@ -183,7 +185,7 @@ float frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, i
         {
             amp_max = log10(prod_spec);
             fprep = f;
-            printf("%f\n",f);
+            printf("fprep : %f, amp_max : %f\n",f,amp_max);
         }
     }
     if (fprep == -1){printf("Il ne s'est rien passé\n");}
@@ -204,6 +206,7 @@ void SDL_ExitWithError(char* message)
 }
 
 
+
 void draw_faded_rectangle(SDL_Renderer *renderer,int x, int y,int width, int r,int g, int b,int r_bg, int g_bg, int b_bg)
 {
     /* Dessine un rectangle centré en x,y de largeur width, de hauteur Window_height/4 et faded en haut de couleur r,g,b*/
@@ -221,6 +224,7 @@ void draw_faded_rectangle(SDL_Renderer *renderer,int x, int y,int width, int r,i
 }
 
 
+
 void draw_rect(SDL_Renderer *renderer,int x, int y,int width,int height, int r,int g, int b)
 {
     /* Dessine un rectangle centré en x,y de largeur width, de hauteur height, de couleur r,g,b*/
@@ -235,6 +239,8 @@ void draw_rect(SDL_Renderer *renderer,int x, int y,int width,int height, int r,i
         }
     }
 }
+
+
 
 void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_notes, int indice_derniere_note_en_cours,int animation_time,int nb_notes)
 {
@@ -267,6 +273,7 @@ void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_not
         i++;
     }
 }
+
 
 
 void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
@@ -347,9 +354,37 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
 }
 
 
+/*-----------Ecriture dans un fichier .txt ----------*/
+/*
+   Ces fonctions vont servir à tester nos autres fonctions en enregistrant des tableaux dans des fichier .txt
+   qui seront lu en python pour pouvoir tracer des courbes.
+*/
+
+void float_tab_to_txt(float* tab, int nb_elem, char* nom_tableau) {
+    FILE *fichier = fopen(nom_tableau, "w");
+    
+    for (int i = 0; i < nb_elem; i++) {
+        fprintf(fichier, "%f\n", tab[i]);
+    }
+    
+    fclose(fichier);
+}
+
+void short_tab_to_txt(short* tab, int nb_elem, char* nom_tableau) {
+    FILE *fichier = fopen(nom_tableau, "w");
+    
+    for (int i = 0; i < nb_elem; i++) {
+        if (tab[i] > 0)
+            fprintf(fichier, "%hd\n", tab[i]);
+        else fprintf(fichier, "%hd\n", 0);
+    }
+    
+    fclose(fichier);
+}
+
+/*-------- Main  ----------*/
 
 int main(int argc, char* argv[]){
-        printf("TEST0\n");
     char* nom_fichier = "test_audio.wav";
     FILE *wav = fopen(nom_fichier,"rb");
     printf("\n nom_fichier : %s\n", nom_fichier);
@@ -371,32 +406,34 @@ int main(int argc, char* argv[]){
     rempli_tab(wav, tab_temps, tab_amplitude);
     printf("TEST3\n");
 
+    short_tab_to_txt(tab_amplitude, len_tab, "amplitude_dB.txt");
+
+
+
 
     // Boucle de traitement : fenetrage, transformée de fourier, fréquence détectée
     float T_total = len_tab/Fe; // durée de l'enregistrement
-    float tau = 0.2;       // pas de décalage temporel entre 2 fenêtres (en secondes)
-    float t1 = 0.2;
-    float t2 = 0.4;
+    float tau = 0.1;       // pas de décalage temporel entre 2 fenêtres (en secondes)
+    float t1 = 0;
+    float t2 = t1 + tau;
     float* tab_frequence = malloc(sizeof(float)*len_tab);
     short* amplitude_fenetree = malloc(sizeof(short)*len_tab);
     double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);          // La fonction Transformee_Fourier ne s'applique que sur des tableaux de double et ces tableaux sont composés de nombres complexes d'où le 2*sizeof(double)*len_tab.
     while (t2<T_total)
     {
-        printf("TEST4\n");
+
         // Fenetrage
         fenetrage_hamming(tab_amplitude, amplitude_fenetree, len_tab, Fe, t1, t2);
-        printf("TEST5\n");
 
         // Transformée de fourier
         FourierTransform(amplitude_fenetree, len_tab, amplitude_fourier);
-        printf("TEST6\n");
         // Détection de la fréquence
         int H = 5; // nombre d'harmoniques qu'on étudie
-        float seuil = 50; //seuil en dB pour l'étude des fréquences
+        float seuil = 35; //seuil en dB pour l'étude des fréquences
         float fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
-        printf("TEST7\n");
+
         // Mise des notes dans un tableau
-        printf("[t1,t2] = [%f,%f],  fprep = %f\n", t1,t2,fprep);
+        printf("[t1,t2] = [%f,%f],  fprep = %f\n\n\n", t1,t2,fprep);
 
         t1 = t1 + tau;
         t2 = t2 + tau;
@@ -424,3 +461,4 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
+

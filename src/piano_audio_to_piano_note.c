@@ -3,15 +3,15 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "lect_audio.c"
-#include "fenetrage_hamming.c"
-#include "Transformee_Fourier.c"
-#include "freq_preponderante.c"
+#include "lect_audio.h"
+#include "fenetrage_hamming.h"
+#include "Transformee_Fourier.h"
+#include "freq_preponderante.h"
 
 
 
-int main(int argc, char *argv[]){
-
+int main(){
+    printf("TEST0\n");
     char* nom_fichier = "test_audio.wav";
     FILE *wav = fopen(nom_fichier,"rb");
     printf("\n nom_fichier : %s\n", nom_fichier);
@@ -24,12 +24,14 @@ int main(int argc, char *argv[]){
 
 
     //  RECUPERATION DES TEMPS D'ECHANTILLONAGE ET DES AMPLITUDES ASSOCIEES
+    printf("TEST1\n");
     float* tab_temps = malloc(sizeof(float) * len_tab);
     short* tab_amplitude = malloc(sizeof(short) * len_tab);
     if (tab_temps == NULL || tab_amplitude == NULL){printf("Données trop volumineuses\n"); return 0;}
     wav = fopen(nom_fichier,"rb");
+    printf("TEST2\n");
     rempli_tab(wav, tab_temps, tab_amplitude);
-
+    printf("TEST3\n");
 
 
     // Boucle de traitement : fenetrage, transformée de fourier, fréquence détectée
@@ -42,26 +44,26 @@ int main(int argc, char *argv[]){
     double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);          // La fonction Transformee_Fourier ne s'applique que sur des tableaux de double et ces tableaux sont composés de nombres complexes d'où le 2*sizeof(double)*len_tab.
     while (t2<T_total)
     {
-        
+        printf("TEST4\n");
         // Fenetrage
         fenetrage_hamming(tab_amplitude, amplitude_fenetree, len_tab, Fe, t1, t2);
-
+        printf("TEST5\n");
 
         // Transformée de fourier
         FourierTransform(amplitude_fenetree, len_tab, amplitude_fourier);
-
+        printf("TEST6\n");
         // Détection de la fréquence
         int H = 5; // nombre d'harmoniques qu'on étudie
         float seuil = 50; //seuil en dB pour l'étude des fréquences
         float fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
-
+        printf("TEST7\n");
         // Mise des notes dans un tableau
         printf("[t1,t2] = [%f,%f],  fprep = %f\n", t1,t2,fprep);
 
         t1 = t1 + tau;
         t2 = t2 + tau;
-
     }
+
     free(amplitude_fenetree);
     free(amplitude_fourier);
     free(tab_frequence);

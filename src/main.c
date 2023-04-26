@@ -13,12 +13,39 @@ gcc -Wall -Werror -Wfatal-errors src/main.c -o bin/prog.exe -I include -L lib -l
 
 */
 
-#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 
+
+/*-----------Ecriture dans un fichier .txt ----------*/
+/*
+   Ces fonctions vont servir à tester nos autres fonctions en enregistrant des tableaux dans des fichier .txt
+   qui seront lu en python pour pouvoir tracer des courbes.
+*/
+
+void float_tab_to_txt(float* tab, int nb_elem, char* nom_tableau) {
+    FILE *fichier = fopen(nom_tableau, "w");
+    
+    for (int i = 0; i < nb_elem; i++) {
+        fprintf(fichier, "%f\n", tab[i]);
+    }
+    
+    fclose(fichier);
+}
+
+void short_tab_to_txt(short* tab, int nb_elem, char* nom_tableau) {
+    FILE *fichier = fopen(nom_tableau, "w");
+    
+    for (int i = 0; i < nb_elem; i++) {
+        if (tab[i] > 0)
+            fprintf(fichier, "%hd\n", tab[i]);
+        else fprintf(fichier, "%hd\n", 0);
+    }
+    
+    fclose(fichier);
+}
 
 /*------------------  Fonction lect_audio.c  ----------------*/
 
@@ -170,7 +197,7 @@ float frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, i
     float amp_max = seuil;
     float f;
     float prod_spec;
-    for(int k = 40*(242765./44100); k < (len_tab/H) ;k++) //C'est la première fréquence audible tel que (k/len_tab)*Fe > 20Hz
+    for(int k = 20*(242765./44100); k < (len_tab/H) ;k++) //C'est la première fréquence audible tel que (k/len_tab)*Fe > 20Hz
     {
         f = k*Fe/len_tab;
         prod_spec = 1;
@@ -185,15 +212,107 @@ float frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, i
         {
             amp_max = log10(prod_spec);
             fprep = f;
-            printf("fprep : %f, amp_max : %f\n",f,amp_max);
         }
     }
     if (fprep == -1){printf("Il ne s'est rien passé\n");}
     return (fprep); 
 }
 
+/*--------  fonction frequence_to_note  ----------*/
 
-/*-------- fonctions pour la partie graphique -----------*/
+int frequency_to_note_number(float frequency) {
+    float A4_frequency = 440.0; // A4 has a frequency of 440 Hz
+    float C0_frequency = A4_frequency * pow(2.0, -4.75); // C0 has a frequency of about 16.35 Hz
+
+    float half_steps_above_c0 = log2(frequency / C0_frequency) * 12.0;
+    int note_number = round(half_steps_above_c0);
+
+    return note_number;
+}
+
+/*--------  fonction piano_audio_to_piano_notes  ----------*/
+
+void piano_audio_to_piano_note(char* nom_fichier_audio, int* tab_temps_notes, int* tab_notes, int* nb_notes_jouees){
+
+    FILE *wav = fopen(nom_fichier_audio,"rb");
+    printf("\n nom_fichier : %s\n", nom_fichier_audio);
+    int len_tab;
+    float Fe;
+    nb_data_Fe(wav, &len_tab, &Fe);
+    printf("\n nombre d'echantillons et frequence : %d, %f\n\n",len_tab,Fe);
+    if (len_tab == -1){
+        printf("Erreur de lecture\n");
+        tab_temps_notes = NULL;
+        tab_notes = NULL;
+        return ;
+    }
+
+    //  RECUPERATION DES TEMPS D'ECHANTILLONAGE ET DES AMPLITUDES ASSOCIEES
+    float* tab_temps = malloc(sizeof(float) * len_tab);
+    short* tab_amplitude = malloc(sizeof(short) * len_tab);
+    if (tab_temps == NULL || tab_amplitude == NULL){
+        printf("Données trop volumineuses\n");
+        tab_temps_notes = NULL;
+        tab_notes = NULL;
+        return ;
+    }
+    wav = fopen(nom_fichier_audio,"rb");
+    rempli_tab(wav, tab_temps, tab_amplitude);
+
+
+    // Boucle de traitement : fenetrage, transformée de fourier, fréquence détectée
+    float T_total = len_tab/Fe; // durée de l'enregistrement
+    float tau = 0.1;       // pas de décalage temporel entre 2 fenêtres (en secondes)
+    float t1 = 0;
+    float t2 = t1 + tau;
+    float* tab_frequence = malloc(sizeof(float)*len_tab);
+    short* amplitude_fenetree = malloc(sizeof(short)*len_tab);
+    double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);          // La fonction Transformee_Fourier ne s'applique que sur des tableaux de double et ces tableaux sont composés de nombres complexes d'où le 2*sizeof(double)*len_tab.
+    int i = 0;
+    *nb_notes_jouees = 0;
+    while (t2<T_total)
+    {
+
+        // Fenetrage
+        fenetrage_hamming(tab_amplitude, amplitude_fenetree, len_tab, Fe, t1, t2);
+
+        // Transformée de fourier
+        FourierTransform(amplitude_fenetree, len_tab, amplitude_fourier);
+        // Détection de la fréquence
+        int H = 5; // nombre d'harmoniques qu'on étudie
+        float seuil = 35; //seuil en dB pour l'étude des fréquences
+        float fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
+
+        // Mise des notes dans le tableau
+        printf("[t1,t2] = [%f,%f],  fprep = %f\n\n\n", t1,t2,fprep);
+        if (fprep != -1){
+            tab_notes[i] = frequency_to_note_number(fprep);
+            tab_temps_notes[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
+            i++;
+            (*nb_notes_jouees)++;
+        }
+
+        t1 = t1 + tau;
+        t2 = t2 + tau;
+    }
+    printf("Test1");
+    free(tab_temps);
+    printf("Test2");
+    free(amplitude_fenetree);
+    printf("Test3");
+    free(amplitude_fourier);
+    printf("Test4");
+    free(tab_frequence);
+    printf("Test5");
+    free(tab_amplitude);
+    printf("Test6");
+}
+
+
+
+/*--------  fonctions pour la partie graphique  -----------*/
+
+#include <SDL.h>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -354,111 +473,25 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
 }
 
 
-/*-----------Ecriture dans un fichier .txt ----------*/
-/*
-   Ces fonctions vont servir à tester nos autres fonctions en enregistrant des tableaux dans des fichier .txt
-   qui seront lu en python pour pouvoir tracer des courbes.
-*/
-
-void float_tab_to_txt(float* tab, int nb_elem, char* nom_tableau) {
-    FILE *fichier = fopen(nom_tableau, "w");
-    
-    for (int i = 0; i < nb_elem; i++) {
-        fprintf(fichier, "%f\n", tab[i]);
-    }
-    
-    fclose(fichier);
-}
-
-void short_tab_to_txt(short* tab, int nb_elem, char* nom_tableau) {
-    FILE *fichier = fopen(nom_tableau, "w");
-    
-    for (int i = 0; i < nb_elem; i++) {
-        if (tab[i] > 0)
-            fprintf(fichier, "%hd\n", tab[i]);
-        else fprintf(fichier, "%hd\n", 0);
-    }
-    
-    fclose(fichier);
-}
-
 /*-------- Main  ----------*/
 
 int main(int argc, char* argv[]){
-    char* nom_fichier = "test_audio.wav";
-    FILE *wav = fopen(nom_fichier,"rb");
-    printf("\n nom_fichier : %s\n", nom_fichier);
-    int len_tab;
-    float Fe;
-    nb_data_Fe(wav, &len_tab, &Fe);
-    printf("\n nombre d'echantillons et fréquence : %d, %f\n\n",len_tab,Fe);
-    if (len_tab == -1){return 0;} //Erreur de lecture -> le programme s'arrête
+
+    int* tab_temps_notes = malloc(sizeof(int)*100);
+    int* tab_notes = malloc(sizeof(int)*100);
+    int nb_notes_jouees;
+
+    //Lecture et enregistrement des notes jouees
+    piano_audio_to_piano_note("audio.wav", tab_temps_notes, tab_notes, &nb_notes_jouees);
+
+    printf("nombre de notes jouees : %d\n",nb_notes_jouees);
 
 
-
-    //  RECUPERATION DES TEMPS D'ECHANTILLONAGE ET DES AMPLITUDES ASSOCIEES
-    printf("TEST1\n");
-    float* tab_temps = malloc(sizeof(float) * len_tab);
-    short* tab_amplitude = malloc(sizeof(short) * len_tab);
-    if (tab_temps == NULL || tab_amplitude == NULL){printf("Données trop volumineuses\n"); return 0;}
-    wav = fopen(nom_fichier,"rb");
-    printf("TEST2\n");
-    rempli_tab(wav, tab_temps, tab_amplitude);
-    printf("TEST3\n");
-
-    short_tab_to_txt(tab_amplitude, len_tab, "amplitude_dB.txt");
-
-
-
-
-    // Boucle de traitement : fenetrage, transformée de fourier, fréquence détectée
-    float T_total = len_tab/Fe; // durée de l'enregistrement
-    float tau = 0.1;       // pas de décalage temporel entre 2 fenêtres (en secondes)
-    float t1 = 0;
-    float t2 = t1 + tau;
-    float* tab_frequence = malloc(sizeof(float)*len_tab);
-    short* amplitude_fenetree = malloc(sizeof(short)*len_tab);
-    double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);          // La fonction Transformee_Fourier ne s'applique que sur des tableaux de double et ces tableaux sont composés de nombres complexes d'où le 2*sizeof(double)*len_tab.
-    while (t2<T_total)
-    {
-
-        // Fenetrage
-        fenetrage_hamming(tab_amplitude, amplitude_fenetree, len_tab, Fe, t1, t2);
-
-        // Transformée de fourier
-        FourierTransform(amplitude_fenetree, len_tab, amplitude_fourier);
-        // Détection de la fréquence
-        int H = 5; // nombre d'harmoniques qu'on étudie
-        float seuil = 35; //seuil en dB pour l'étude des fréquences
-        float fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
-
-        // Mise des notes dans un tableau
-        printf("[t1,t2] = [%f,%f],  fprep = %f\n\n\n", t1,t2,fprep);
-
-        t1 = t1 + tau;
-        t2 = t2 + tau;
-    }
-
-    free(amplitude_fenetree);
-    free(amplitude_fourier);
-    free(tab_frequence);
-    free(tab_temps);
-    free(tab_amplitude);
-
-
-    //Test de l'affichage graphique sur des notes aléatoires
-        printf("\n\n");
-    //Exemple de tableau issue de la fonction audio_to_piano_notes
-    int tab_temps_notes[100];
-    int tab_notes[100];
-    srand(time(NULL));
-    for (int i = 1; i <= 100; i++){
-        tab_temps_notes[i-1] = 100*i;
-        tab_notes[i-1] = (rand() % 89);
-    }
     //Affichage graphique
-    piano_notes_to_video(tab_temps_notes, tab_notes, 100);
+    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees);
 
+    free(tab_temps_notes);
+    free(tab_notes);
     return 0;
 }
 

@@ -395,19 +395,57 @@ void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_not
 
 
 
-void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
+void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audio_name)
 {
     
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
     // Lancement SDL
-    if(SDL_Init(SDL_INIT_VIDEO) != 0)
-        SDL_ExitWithError("Initialisation SDL");
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0){
+        SDL_ExitWithError("Initialisation SDL echouee");
+        SDL_Quit();
+        return;
+    }
 
     // Creation fenêtre + rendu
-    if(SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer) != 0)
+    if(SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer) != 0){
         SDL_ExitWithError("Impossible de creer la fenetre et le rendu");
+        SDL_Quit();
+        return;
+    }
+
+    // Chargement de l'audio .WAV           
+    SDL_AudioSpec wavSpec;
+    Uint32 wavLength;
+    Uint8 *wavBuffer;
+    if(!SDL_LoadWAV(audio_name, &wavSpec, &wavBuffer, &wavLength))
+    {
+        printf("le son .WAV: '%s' n'a pas pu être chargé!\n"
+                "SDL_Error: %s\n", audio_name, SDL_GetError());
+        return;
+    }
+
+    // Ouverture audio device
+    SDL_AudioDeviceID deviceId = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
+    if(!deviceId)
+    {
+        printf("L'audio device n'a pas pu être ouvert!\n"
+                "SDL_Error: %s\n", SDL_GetError());
+        SDL_FreeWAV(wavBuffer);
+        return;
+    }
+
+    // Ajout à la file (playlist)
+    if(SDL_QueueAudio(deviceId, wavBuffer, wavLength) < 0)
+    {
+        printf("L'audio n'a pas pu être ajouté à la playlist!\n"
+                "SDL_Error: %s\n", SDL_GetError());
+        SDL_CloseAudioDevice(deviceId);
+        SDL_FreeWAV(wavBuffer);
+        return;
+    }
+        
 
     /*-------------- Fonctions utiles en SDL:----------------------
 
@@ -428,6 +466,12 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
 
 
     /*------------------Gestion d'Evenements------------------*/
+
+
+    // Lance l'audio
+        SDL_PauseAudioDevice(deviceId, 0);
+
+
     int nb_note_deja_jouee = 0;
     int indice_derniere_note_en_cours = 0;
     int animation_time = 2000; //temps d'animation d'une note en ms
@@ -466,6 +510,8 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
     
     /*--------------------------------------------------------*/
 
+    SDL_CloseAudioDevice(deviceId);
+    SDL_FreeWAV(wavBuffer);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -475,6 +521,7 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes)
 
 /*-------- Main  ----------*/
 
+
 int main(int argc, char* argv[]){
 
     int* tab_temps_notes = malloc(sizeof(int)*100);
@@ -482,16 +529,166 @@ int main(int argc, char* argv[]){
     int nb_notes_jouees;
 
     //Lecture et enregistrement des notes jouees
-    piano_audio_to_piano_note("audio.wav", tab_temps_notes, tab_notes, &nb_notes_jouees);
+    piano_audio_to_piano_note("test_audio.wav", tab_temps_notes, tab_notes, &nb_notes_jouees);
 
     printf("nombre de notes jouees : %d\n",nb_notes_jouees);
 
 
     //Affichage graphique
-    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees);
+    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees, "test_audio.wav");
 
     free(tab_temps_notes);
     free(tab_notes);
     return 0;
 }
 
+
+
+
+// // Define MAX and MIN macros
+// #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+// #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
+// // Define screen dimensions
+// #define SCREEN_WIDTH    800
+// #define SCREEN_HEIGHT   600
+
+// #define WAVES_SOUND "./test_audio.wav"
+
+// int main(int argc, char* argv[])
+// {
+
+//     // Initialize SDL
+//     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+//     {
+//         printf("SDL could not be initialized!\n"
+//                "SDL_Error: %s\n", SDL_GetError());
+//         return 0;
+//     }
+
+
+//     // Create window
+//     SDL_Window *window = SDL_CreateWindow("SDL2 audio sample (Press SPACE to pause/play)",
+//                                           SDL_WINDOWPOS_UNDEFINED,
+//                                           SDL_WINDOWPOS_UNDEFINED,
+//                                           SCREEN_WIDTH, SCREEN_HEIGHT,
+//                                           SDL_WINDOW_SHOWN);
+                                          
+//     if(!window)
+//     {
+//         printf("Window could not be created!\n"
+//                "SDL_Error: %s\n", SDL_GetError());
+//     }
+//     else
+//     {
+//         // Create renderer
+//         SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+//         if(!renderer)
+//         {
+//             printf("Renderer could not be created!\n"
+//                    "SDL_Error: %s\n", SDL_GetError());
+//         }
+//         else
+//         {
+//             // Load .WAV sound
+//             SDL_AudioSpec wavSpec;
+//             Uint32 wavLength;
+//             Uint8 *wavBuffer;
+//             if(!SDL_LoadWAV(WAVES_SOUND, &wavSpec, &wavBuffer, &wavLength))
+//             {
+//                 printf(".WAV sound '%s' could not be loaded!\n"
+//                        "SDL_Error: %s\n", WAVES_SOUND, SDL_GetError());
+//                 return 0;
+//             }
+
+//             // Open audio device
+//             SDL_AudioDeviceID deviceId = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
+//             if(!deviceId)
+//             {
+//                 printf("Audio device could not be opened!\n"
+//                        "SDL_Error: %s\n", SDL_GetError());
+//                 SDL_FreeWAV(wavBuffer);
+//                 return 0;
+//             }
+
+//             // Queue audio (~ Add to playlist)
+//             if(SDL_QueueAudio(deviceId, wavBuffer, wavLength) < 0)
+//             {
+//                 printf("Audio could not be queued!\n"
+//                        "SDL_Error: %s\n", SDL_GetError());
+//                 SDL_CloseAudioDevice(deviceId);
+//                 SDL_FreeWAV(wavBuffer);
+//                 return 0;
+//             }
+
+//             // Play audio
+//             SDL_PauseAudioDevice(deviceId, 0);
+
+
+//             // Event loop exit flag
+//             int quit = 0;
+
+//             // Event loop
+
+//             while(!quit)
+//             {
+//                 SDL_Event e;
+
+//                 // Wait indefinitely for the next available event
+//                 SDL_WaitEvent(&e);
+
+//                 // User requests quit
+//                 if(e.type == SDL_QUIT)
+//                 {
+//                     quit = 1;
+//                 }
+                
+//                 else if(e.type == SDL_KEYDOWN)
+//                 {
+//                     switch (e.key.keysym.sym)
+//                     {
+//                     case SDLK_SPACE:
+//                         if(SDL_GetAudioDeviceStatus(deviceId) == SDL_AUDIO_PLAYING)
+//                             SDL_PauseAudioDevice(deviceId, 1);
+//                         else if(SDL_GetAudioDeviceStatus(deviceId) == SDL_AUDIO_PAUSED)
+//                             SDL_PauseAudioDevice(deviceId, 0);
+//                         break;
+//                     }
+//                 }
+
+//                 // Initialize renderer color white for the background
+//                 SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+//                 // Clear screen
+//                 SDL_RenderClear(renderer);
+
+//                 // // Set renderer color blue to draw the square
+//                 // SDL_SetRenderDrawColor(renderer, 0x19, 0x71, 0xA9, 0xFF);
+
+//                 // // Draw filled square
+//                 // SDL_RenderFillRect(renderer, &squareRect);
+
+//                 // Check pause status
+
+
+//                 // Update screen
+//                 SDL_RenderPresent(renderer);
+//             }
+
+//             // Clean up audio
+//             SDL_CloseAudioDevice(deviceId);
+//             SDL_FreeWAV(wavBuffer);
+
+//             // Destroy renderer
+//             SDL_DestroyRenderer(renderer);
+//         }
+
+//         // Destroy window
+//         SDL_DestroyWindow(window);
+//     }
+
+//     // Quit SDL
+//     SDL_Quit();
+
+//     return 0;
+// }

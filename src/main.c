@@ -191,15 +191,15 @@ void FourierTransform(short* tab_amplitudes_temporel, int nb_data, double* tab_a
 
 /*------------  fonction de freq_preponderante.c  -----------*/
 
-float frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int len_tab)
+int frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int len_tab)
 {
-    float fprep = -1;
+    int fprep = -1;
     float amp_max = seuil;
-    float f;
+    int f;
     float prod_spec;
-    for(int k = 20*(242765./44100); k < (len_tab/H) ;k++) //C'est la première fréquence audible tel que (k/len_tab)*Fe > 20Hz
+    for(int k = 40*(242765./44100); k < (len_tab/H) ;k++) //C'est la première fréquence audible tel que (k/len_tab)*Fe > 20Hz
     {
-        f = k*Fe/len_tab;
+        f = floor(k*Fe/len_tab);
         prod_spec = 1;
         for (int i = 1; i <= H; i++)        // On indice de 1 à H compris pour prendre en compte le fondamental
         {
@@ -215,12 +215,13 @@ float frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, i
         }
     }
     if (fprep == -1){printf("Il ne s'est rien passé\n");}
+    printf("H=%d, prod = %f, seuil =%f",H, amp_max, seuil);
     return (fprep); 
 }
 
 /*--------  fonction frequence_to_note  ----------*/
 
-int frequency_to_note_number(float frequency) {
+int frequency_to_note_number(int frequency) {
     float A4_frequency = 440.0; // A4 has a frequency of 440 Hz
     float C0_frequency = A4_frequency * pow(2.0, -4.75); // C0 has a frequency of about 16.35 Hz
 
@@ -232,7 +233,7 @@ int frequency_to_note_number(float frequency) {
 
 /*--------  fonction piano_audio_to_piano_notes  ----------*/
 
-void piano_audio_to_piano_note(char* nom_fichier_audio, int* tab_temps_notes, int* tab_notes, int* nb_notes_jouees){
+void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, int** tab_notes, int* nb_notes_jouees){
 
     FILE *wav = fopen(nom_fichier_audio,"rb");
     printf("\n nom_fichier : %s\n", nom_fichier_audio);
@@ -242,18 +243,18 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int* tab_temps_notes, in
     printf("\n nombre d'echantillons et frequence : %d, %f\n\n",len_tab,Fe);
     if (len_tab == -1){
         printf("Erreur de lecture\n");
-        tab_temps_notes = NULL;
-        tab_notes = NULL;
+        *tab_temps_notes = NULL;
+        *tab_notes = NULL;
         return ;
     }
 
     //  RECUPERATION DES TEMPS D'ECHANTILLONAGE ET DES AMPLITUDES ASSOCIEES
     float* tab_temps = malloc(sizeof(float) * len_tab);
-    short* tab_amplitude = malloc(sizeof(short) * len_tab);
+    short* tab_amplitude = malloc(sizeof(int) * len_tab);
     if (tab_temps == NULL || tab_amplitude == NULL){
         printf("Données trop volumineuses\n");
-        tab_temps_notes = NULL;
-        tab_notes = NULL;
+        *tab_temps_notes = NULL;
+        *tab_notes = NULL;
         return ;
     }
     wav = fopen(nom_fichier_audio,"rb");
@@ -265,29 +266,68 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int* tab_temps_notes, in
     float tau = 0.1;       // pas de décalage temporel entre 2 fenêtres (en secondes)
     float t1 = 0;
     float t2 = t1 + tau;
+    // float* tab_frequence = malloc(sizeof(float)*len_tab);
+    // short* amplitude_fenetree = malloc(sizeof(short)*len_tab);
+    // double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);          // La fonction Transformee_Fourier ne s'applique que sur des tableaux de double et ces tableaux sont composés de nombres complexes d'où le 2*sizeof(double)*len_tab.
+    // printf("test apres les mallocs pour les tab fenetrees\n");
+
     float* tab_frequence = malloc(sizeof(float)*len_tab);
-    short* amplitude_fenetree = malloc(sizeof(short)*len_tab);
-    double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);          // La fonction Transformee_Fourier ne s'applique que sur des tableaux de double et ces tableaux sont composés de nombres complexes d'où le 2*sizeof(double)*len_tab.
+    if (tab_frequence == NULL) {
+        printf("Erreur : impossible d'allouer de la mémoire pour tab_frequence\n");
+        exit(1);
+    }
+    // printf("malloc tab_frequence reussie\n");
+
+    short* amplitude_fenetree = malloc(sizeof(int)*len_tab);
+    if (amplitude_fenetree == NULL) {
+        printf("Erreur : impossible d'allouer de la mémoire pour amplitude_fenetree\n");
+        exit(1);
+    }
+    // printf("malloc amplitude_fenetree reussie\n");
+
+    double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);
+    if (amplitude_fourier == NULL) {
+        printf("Erreur : impossible d'allouer de la mémoire pour amplitude_fourier\n");
+        exit(1);
+    }
+    // printf("malloc amplitude_fourrier reussie\n");
+
+// Vérification : affiche un message si l'allocation de mémoire a réussi
+// printf("Allocation de mémoire réussie pour les tableaux\n");
+
     int i = 0;
     *nb_notes_jouees = 0;
+    printf("Test0");
     while (t2<T_total)
     {
 
         // Fenetrage
+        // printf("Test avant fenetrage_haming");
         fenetrage_hamming(tab_amplitude, amplitude_fenetree, len_tab, Fe, t1, t2);
+        // printf("Test apres fenetrage_haming");
 
         // Transformée de fourier
+        // printf("Test avant fourierTranform");
         FourierTransform(amplitude_fenetree, len_tab, amplitude_fourier);
         // Détection de la fréquence
         int H = 5; // nombre d'harmoniques qu'on étudie
-        float seuil = 35; //seuil en dB pour l'étude des fréquences
-        float fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
+        float seuil = 33; //seuil en dB pour l'étude des fréquences
+        int new_fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
+        printf(" new_fprep = %d, ",new_fprep);
+        int fprep;
+        if (t1 > 0){
+            if (new_fprep != -1 && fprep != -1 && ((new_fprep % fprep < 3) || fabs(fprep - (new_fprep % fprep)) < 3)){
+                //Alors on a surement une erreur de détection de la première harmonique mais c'est la même fréquence qui est joué qu'avant
+                new_fprep = fprep;
+            }
+        }
+        fprep = new_fprep;
 
         // Mise des notes dans le tableau
-        printf("[t1,t2] = [%f,%f],  fprep = %f\n\n\n", t1,t2,fprep);
+        printf("  [t1,t2] = [%f,%f],  fprep = %d\n\n\n", t1,t2,fprep);
         if (fprep != -1){
-            tab_notes[i] = frequency_to_note_number(fprep);
-            tab_temps_notes[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
+            (*tab_notes)[i] = frequency_to_note_number(fprep);
+            (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
             i++;
             (*nb_notes_jouees)++;
         }
@@ -397,7 +437,7 @@ void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_not
 
 void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audio_name)
 {
-    
+    printf("Debut Video\n");
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
@@ -468,10 +508,8 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audi
     /*------------------Gestion d'Evenements------------------*/
 
 
-    // Lance l'audio
-        SDL_PauseAudioDevice(deviceId, 0);
 
-
+    int audio_has_started = 0;
     int nb_note_deja_jouee = 0;
     int indice_derniere_note_en_cours = 0;
     int animation_time = 2000; //temps d'animation d'une note en ms
@@ -483,6 +521,12 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audi
     {   
         t = SDL_GetTicks(); 
         //Temps écoulé depuis le début (Depuis SDL_init) en ms
+
+        if (t > animation_time && (audio_has_started==0)){
+            // Lance l'audio
+             SDL_PauseAudioDevice(deviceId, 0);
+             audio_has_started = 1;
+        }
 
         if (tab_temps[indice_derniere_note_en_cours] < t - animation_time)
         { //Dans ce cas cette dernière note à finis son animation, la note suivante est la suivante à finir son animation
@@ -529,13 +573,16 @@ int main(int argc, char* argv[]){
     int nb_notes_jouees;
 
     //Lecture et enregistrement des notes jouees
-    piano_audio_to_piano_note("test_audio.wav", tab_temps_notes, tab_notes, &nb_notes_jouees);
+    piano_audio_to_piano_note("test_audio_une_note.wav", &tab_temps_notes, &tab_notes, &nb_notes_jouees);
 
     printf("nombre de notes jouees : %d\n",nb_notes_jouees);
+    for(int i=0; i<nb_notes_jouees; i++){
+        printf("%d,%d \n", tab_temps_notes[i], tab_notes[i]);
+    }
 
 
     //Affichage graphique
-    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees, "test_audio.wav");
+    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees, "test_audio_une_note.wav");
 
     free(tab_temps_notes);
     free(tab_notes);
@@ -543,152 +590,3 @@ int main(int argc, char* argv[]){
 }
 
 
-
-
-// // Define MAX and MIN macros
-// #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
-// #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-
-// // Define screen dimensions
-// #define SCREEN_WIDTH    800
-// #define SCREEN_HEIGHT   600
-
-// #define WAVES_SOUND "./test_audio.wav"
-
-// int main(int argc, char* argv[])
-// {
-
-//     // Initialize SDL
-//     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
-//     {
-//         printf("SDL could not be initialized!\n"
-//                "SDL_Error: %s\n", SDL_GetError());
-//         return 0;
-//     }
-
-
-//     // Create window
-//     SDL_Window *window = SDL_CreateWindow("SDL2 audio sample (Press SPACE to pause/play)",
-//                                           SDL_WINDOWPOS_UNDEFINED,
-//                                           SDL_WINDOWPOS_UNDEFINED,
-//                                           SCREEN_WIDTH, SCREEN_HEIGHT,
-//                                           SDL_WINDOW_SHOWN);
-                                          
-//     if(!window)
-//     {
-//         printf("Window could not be created!\n"
-//                "SDL_Error: %s\n", SDL_GetError());
-//     }
-//     else
-//     {
-//         // Create renderer
-//         SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-//         if(!renderer)
-//         {
-//             printf("Renderer could not be created!\n"
-//                    "SDL_Error: %s\n", SDL_GetError());
-//         }
-//         else
-//         {
-//             // Load .WAV sound
-//             SDL_AudioSpec wavSpec;
-//             Uint32 wavLength;
-//             Uint8 *wavBuffer;
-//             if(!SDL_LoadWAV(WAVES_SOUND, &wavSpec, &wavBuffer, &wavLength))
-//             {
-//                 printf(".WAV sound '%s' could not be loaded!\n"
-//                        "SDL_Error: %s\n", WAVES_SOUND, SDL_GetError());
-//                 return 0;
-//             }
-
-//             // Open audio device
-//             SDL_AudioDeviceID deviceId = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
-//             if(!deviceId)
-//             {
-//                 printf("Audio device could not be opened!\n"
-//                        "SDL_Error: %s\n", SDL_GetError());
-//                 SDL_FreeWAV(wavBuffer);
-//                 return 0;
-//             }
-
-//             // Queue audio (~ Add to playlist)
-//             if(SDL_QueueAudio(deviceId, wavBuffer, wavLength) < 0)
-//             {
-//                 printf("Audio could not be queued!\n"
-//                        "SDL_Error: %s\n", SDL_GetError());
-//                 SDL_CloseAudioDevice(deviceId);
-//                 SDL_FreeWAV(wavBuffer);
-//                 return 0;
-//             }
-
-//             // Play audio
-//             SDL_PauseAudioDevice(deviceId, 0);
-
-
-//             // Event loop exit flag
-//             int quit = 0;
-
-//             // Event loop
-
-//             while(!quit)
-//             {
-//                 SDL_Event e;
-
-//                 // Wait indefinitely for the next available event
-//                 SDL_WaitEvent(&e);
-
-//                 // User requests quit
-//                 if(e.type == SDL_QUIT)
-//                 {
-//                     quit = 1;
-//                 }
-                
-//                 else if(e.type == SDL_KEYDOWN)
-//                 {
-//                     switch (e.key.keysym.sym)
-//                     {
-//                     case SDLK_SPACE:
-//                         if(SDL_GetAudioDeviceStatus(deviceId) == SDL_AUDIO_PLAYING)
-//                             SDL_PauseAudioDevice(deviceId, 1);
-//                         else if(SDL_GetAudioDeviceStatus(deviceId) == SDL_AUDIO_PAUSED)
-//                             SDL_PauseAudioDevice(deviceId, 0);
-//                         break;
-//                     }
-//                 }
-
-//                 // Initialize renderer color white for the background
-//                 SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-
-//                 // Clear screen
-//                 SDL_RenderClear(renderer);
-
-//                 // // Set renderer color blue to draw the square
-//                 // SDL_SetRenderDrawColor(renderer, 0x19, 0x71, 0xA9, 0xFF);
-
-//                 // // Draw filled square
-//                 // SDL_RenderFillRect(renderer, &squareRect);
-
-//                 // Check pause status
-
-
-//                 // Update screen
-//                 SDL_RenderPresent(renderer);
-//             }
-
-//             // Clean up audio
-//             SDL_CloseAudioDevice(deviceId);
-//             SDL_FreeWAV(wavBuffer);
-
-//             // Destroy renderer
-//             SDL_DestroyRenderer(renderer);
-//         }
-
-//         // Destroy window
-//         SDL_DestroyWindow(window);
-//     }
-
-//     // Quit SDL
-//     SDL_Quit();
-
-//     return 0;
-// }

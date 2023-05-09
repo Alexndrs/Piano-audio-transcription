@@ -1,9 +1,13 @@
 /*
 Compilation dans le fichier ~/Piano-audio-transcription:
 
-  gcc -Wall -Werror -Wfatal-errors src/main.c -o bin/prog.exe -I include -L lib -lmingw32 -lSDL2main -lSDL2
+    Pour Alexandre
+    gcc -Wall -Werror -Wfatal-errors src/main.c -o bin/prog.exe -I include -L lib -lmingw32 -lSDL2main -lSDL2
 
-pour généré un prog.exe sans fenetre de commande qui s'ouvre:
+    Pour Tadeusz
+    gcc -Wall -Werror -Wfatal-errors src/main.c -o bin/prog.exe -I src2/include -L src2/lib -lmingw32 -lSDL2main -lSDL2 
+
+pour générer un prog.exe sans fenetre de commande qui s'ouvre:
   gcc -Wall -Werror -Wfatal-errors src/main.c -o bin/prog.exe -I include -L lib -lmingw32 -lSDL2main -lSDL2 -lm
 
 include GSL L- lib -lgslcblas -lgsl -lm -o bin/test.exe : 

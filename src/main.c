@@ -166,35 +166,35 @@ void fenetrage_hamming(short* tab_amplitude, short* amplitude_fenetree, int nb_d
 /*-----------  Fonction de transformee_fourier.c  ---------------*/
 
 #include <gsl/gsl_errno.h>
-#include <gsl/gsl_fft_complex.h>
+#include <gsl/gsl_fft_real.h>
 
-#define REAL(z,i) ((z)[2*(i)])
-#define IMAG(z,i) ((z)[2*(i)+1])
 
 void FourierTransform(short* tab_amplitudes_temporel, int nb_data, double* tab_amplitude_frequenciel){
-  /*Transformée de Fourier d'un tableau d'amplitudes*/
+    /*Transformée de Fourier d'un tableau d'amplitudes*/
 
-  gsl_fft_complex_wavetable* wavetable;
-  gsl_fft_complex_workspace* workspace;
+
+    //On complete notre tableau avec des 0 pour avoir un tableau de longueur une puissance de 2
+    int nb_data_power_2 = pow(2, ceil(log2(nb_data)));
+    double *pow2tab_data = malloc(nb_data_power_2*sizeof(double));
+      
+      
+    for (int i = 0; i < nb_data; i++) {
+        pow2tab_data[i] = tab_amplitudes_temporel[i];
+    }
+
+
+  gsl_fft_real_radix2_transform(pow2tab_data, 1, nb_data_power_2);
 
   for (int i = 0; i < nb_data; i++) {
-      REAL(tab_amplitude_frequenciel, i) = tab_amplitudes_temporel[i];
-      IMAG(tab_amplitude_frequenciel, i) = 0.0;
+    tab_amplitude_frequenciel[i] = pow2tab_data[i];
   }
 
-  wavetable = gsl_fft_complex_wavetable_alloc(nb_data);
-  workspace = gsl_fft_complex_workspace_alloc(nb_data);
-
-  gsl_fft_complex_forward(tab_amplitude_frequenciel, 1, nb_data, wavetable, workspace);
-
-
-  gsl_fft_complex_wavetable_free(wavetable);
-  gsl_fft_complex_workspace_free(workspace);
+    free(pow2tab_data);
 }
 
 
-/*------------  fonction de freq_preponderante.c  -----------*/
 
+/*------------  fonction de freq_preponderante.c  -----------*/
 int frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int len_tab)
 {
     int fprep = -1;
@@ -207,9 +207,8 @@ int frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int
         prod_spec = 1;
         for (int i = 1; i <= H; i++)        // On indice de 1 à H compris pour prendre en compte le fondamental
         {
-            double r = REAL(tab_amplitude,i*k);
-            double im = IMAG(tab_amplitude,i*k);
-            prod_spec *=(r*r + im*im);
+            double val = tab_amplitude[i*k];
+            prod_spec *=(val*val);
         }
 
         if(log10(prod_spec) > amp_max)
@@ -218,10 +217,11 @@ int frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int
             fprep = f;
         }
     }
-    if (fprep == -1){printf("Il ne s'est rien passé\n");}
+    if (fprep == -1){printf("Il ne s'est rien passe\n");}
     printf("H=%d, prod = %f, seuil =%f",H, amp_max, seuil);
     return (fprep); 
 }
+
 
 /*--------  fonction frequence_to_note  ----------*/
 
@@ -282,6 +282,7 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, i
     }
     // printf("malloc tab_frequence reussie\n");
 
+
     short* amplitude_fenetree = malloc(sizeof(int)*len_tab);
     if (amplitude_fenetree == NULL) {
         printf("Erreur : impossible d'allouer de la mémoire pour amplitude_fenetree\n");
@@ -320,7 +321,7 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, i
         printf(" new_fprep = %d, ",new_fprep);
         int fprep;
         if (t1 > 0){
-            if (new_fprep != -1 && fprep != -1 && ((new_fprep % fprep < 3) || fabs(fprep - (new_fprep % fprep)) < 3)){
+            if (new_fprep != -1 && fprep != -1 && ((new_fprep % fprep < 10) || fabs(fprep - (new_fprep % fprep)) < 10)){
                 //Alors on a surement une erreur de détection de la première harmonique mais c'est la même fréquence qui est joué qu'avant
                 new_fprep = fprep;
             }
@@ -572,12 +573,12 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audi
 
 int main(int argc, char* argv[]){
 
-    int* tab_temps_notes = malloc(sizeof(int)*100);
-    int* tab_notes = malloc(sizeof(int)*100);
+    int* tab_temps_notes = malloc(sizeof(int)*1000);
+    int* tab_notes = malloc(sizeof(int)*1000);
     int nb_notes_jouees;
 
     //Lecture et enregistrement des notes jouees
-    piano_audio_to_piano_note("test_audio_une_note.wav", &tab_temps_notes, &tab_notes, &nb_notes_jouees);
+    piano_audio_to_piano_note("test_audio.wav", &tab_temps_notes, &tab_notes, &nb_notes_jouees);
 
     printf("nombre de notes jouees : %d\n",nb_notes_jouees);
     for(int i=0; i<nb_notes_jouees; i++){
@@ -586,7 +587,7 @@ int main(int argc, char* argv[]){
 
 
     //Affichage graphique
-    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees, "test_audio_une_note.wav");
+    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees, "test_audio.wav");
 
     free(tab_temps_notes);
     free(tab_notes);

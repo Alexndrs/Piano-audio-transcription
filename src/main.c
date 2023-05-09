@@ -405,13 +405,12 @@ void draw_rect(SDL_Renderer *renderer,int x, int y,int width,int height, int r,i
 }
 
 
-
 void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_notes, int indice_derniere_note_en_cours,int animation_time,int nb_notes)
 {
     int largeur_note_blanche = WINDOW_WIDTH/52; //Il y'a 52 touches blanches sur un piano
     int hauteur_note_blanche = WINDOW_HEIGHT/10;
     int largeur_note_noire = largeur_note_blanche/2; //les touches noires sont un peu plus petites que les blanches
-    int hauteur_note_noire = 0.66*hauteur_note_blanche; //et plus courtes
+    int hauteur_note_noire = 2/3*hauteur_note_blanche; //et plus courtes
 
 
 
@@ -422,9 +421,8 @@ void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_not
             draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,255,255);
         }
     //on dessine toutes les notes noires
-        int xj_noir = largeur_note_blanche; //Sur un piano il y a toujours une première touche noire seule à gauche et de même à droite
+        int xj_noir = largeur_note_blanche; //Sur un piano il y a toujours une première touche noire seule au début
         draw_rect(renderer,xj_noir,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_noire,hauteur_note_noire,0,0,0);
-        draw_rect(renderer,WINDOW_WIDTH-xj_noir,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_noire,hauteur_note_noire,0,0,0);
         xj_noir = 2*largeur_note_blanche;
         int compteur = 1;   //dans un piano il y a soit deux bandes noires pour 3 blanches, soit 3 noires pour 4 blanches, on va traiter ces 2 cas
         int j = 0;
@@ -460,20 +458,42 @@ void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_not
     int i = indice_derniere_note_en_cours;
     while((tab_temps[i] < t)&(i < nb_notes))
     {   //La note i est en cours d'animation... et (t-tab_temps[i])/animation_time permet de situer où elle en est exactement dans son animation
-        int x =  largeur_note_blanche*tab_notes[i]+largeur_note_blanche/2;
-        int y = (WINDOW_HEIGHT-hauteur_note_blanche)*(t-tab_temps[i])/animation_time;
+        if(tab_notes[i] == 2 || (tab_notes[i]-3)%12 == 2 || (tab_notes[i]-3)%12 == 4 || (tab_notes[i]-3)%12 == 7 || (tab_notes[i]-3)%12 == 9 || (tab_notes[i]-3)%12 == 11) //pour les notes noires
+        {
+            int x =  largeur_note_blanche/2*(tab_notes[i]+1+(tab_notes[i]-3)/12);
+            int y = (WINDOW_HEIGHT-hauteur_note_blanche)*(t-tab_temps[i])/animation_time;
 
-        //Plus tard on pourra changer la couleur (ici c'est du rouge), en fonction de la note joué par exemple.
-        draw_faded_rectangle(renderer,x,y,largeur_note_blanche,255,0,0,0,0,0);
+            //Plus tard on pourra changer la couleur (ici c'est du cyan), en fonction de la note joué par exemple.
+            draw_faded_rectangle(renderer,x,y,largeur_note_blanche,0,255,255,0,0,0);
 
-        if ((tab_temps[i] + animation_time - t) < 300){draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,200,200);}
-        else {draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,255,255);}
-        if (SDL_RenderDrawPoint(renderer, x , y) != 0)
-            SDL_ExitWithError("Impossible de dessiner un point");
-        i++;
+            if ((tab_temps[i] + animation_time - t) < 300){draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,200,200);}
+            else {draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,255,255);}
+            if (SDL_RenderDrawPoint(renderer, x , y) != 0)
+            {
+                SDL_ExitWithError("Impossible de dessiner un point");
+            }
+            i++;
+        }
+        else //pour les notes blanches
+        {
+            int x =  largeur_note_blanche/2*(tab_notes[i]+1+(tab_notes[i]-3)/12)+largeur_note_blanche/2;
+            if(tab_notes[i]%12>5){x += largeur_note_blanche/2;}
+            int y = (WINDOW_HEIGHT-hauteur_note_blanche)*(t-tab_temps[i])/animation_time;
+
+            //Plus tard on pourra changer la couleur (ici c'est du rouge), en fonction de la note joué par exemple.
+            draw_faded_rectangle(renderer,x,y,largeur_note_blanche,255,0,0,0,0,0);
+
+            if ((tab_temps[i] + animation_time - t) < 300){draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,200,200);}
+            else {draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,255,255);}
+            if (SDL_RenderDrawPoint(renderer, x , y) != 0)
+            {
+                SDL_ExitWithError("Impossible de dessiner un point");
+            }
+            i++;
+        }
+
     }
 }
-
 
 
 void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audio_name)

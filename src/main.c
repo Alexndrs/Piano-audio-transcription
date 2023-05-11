@@ -136,8 +136,7 @@ void rempli_tab(FILE *wav, float* tab_temps, short* tab_amplitudes){
     while(fread(&value,(header.bits_per_sample)/8,1,wav)){
         //lecture des echantillons et enregistrement dans le tableau (en dB)
         tab_amplitudes[i] = 20*log10(fabs(value));
-        if (tab_amplitudes[i] < 0)
-            tab_amplitudes[i] = 0;
+        if (tab_amplitudes[i] < 0){tab_amplitudes[i] = 0;}
         tab_temps[i] = 1.*i/header.frequency;
         i++;
     }
@@ -220,6 +219,16 @@ int frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int
     if (fprep == -1){printf("Il ne s'est rien passe\n");}
     printf("H=%d, prod = %f, seuil =%f",H, amp_max, seuil);
     return (fprep); 
+}
+
+/*-------- fonction coupe_bande  -------------*/
+
+void coupe_bande(int nb_data, double* tab_amplitude_frequenciel, float fprep, float Fe)
+{
+    // On se propose de simplement mettre des zéros sur une bande de +/- 10 Hz autour de la fréquence qu'on souhaite éliminer
+    int kprep = fprep*nb_data/Fe;
+    int largeur = 10*nb_data/Fe;
+    for (int k=kprep-largeur;k<kprep+largeur;k++){tab_amplitude_frequenciel[k]=0;}
 }
 
 
@@ -317,29 +326,57 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, i
         // Détection de la fréquence
         int H = 5; // nombre d'harmoniques qu'on étudie
         float seuil = 33; //seuil en dB pour l'étude des fréquences
+        int fprep;
+    //     while (frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab) != -1){
+    //         int new_fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
+    //         printf(" new_fprep = %d, ",new_fprep);
+    //         if (t1 > 0){
+    //             if (fprep != -1 && ((new_fprep % fprep < 10) || fabs(fprep - (new_fprep % fprep)) < 10)){
+    //                 //Alors on a surement une erreur de détection de la première harmonique mais c'est la même fréquence qui est joué qu'avant
+    //                 new_fprep = fprep;
+    //             }
+    //         }
+
+    //         fprep = new_fprep;
+
+    //         // Mise des notes dans le tableau
+    //         printf("  [t1,t2] = [%f,%f],  fprep = %d\n", t1,t2,fprep);
+    //         (*tab_notes)[i] = frequency_to_note_number(fprep);
+    //         (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
+    //         i++;
+    //         (*nb_notes_jouees)++;
+            
+    //         printf("\n\n");
+    //         coupe_bande(len_tab, amplitude_fourier, fprep, Fe);
+    //     }
+
+    //     t1 = t1 + tau;
+    //     t2 = t2 + tau;
+    // }
         int new_fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
         printf(" new_fprep = %d, ",new_fprep);
-        int fprep;
         if (t1 > 0){
-            if (new_fprep != -1 && fprep != -1 && ((new_fprep % fprep < 10) || fabs(fprep - (new_fprep % fprep)) < 10)){
+            if (fprep != -1 && ((new_fprep % fprep < 10) || fabs(fprep - (new_fprep % fprep)) < 10)){
                 //Alors on a surement une erreur de détection de la première harmonique mais c'est la même fréquence qui est joué qu'avant
                 new_fprep = fprep;
             }
         }
+
         fprep = new_fprep;
 
         // Mise des notes dans le tableau
-        printf("  [t1,t2] = [%f,%f],  fprep = %d\n\n\n", t1,t2,fprep);
-        if (fprep != -1){
-            (*tab_notes)[i] = frequency_to_note_number(fprep);
-            (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
-            i++;
-            (*nb_notes_jouees)++;
-        }
+        printf("  [t1,t2] = [%f,%f],  fprep = %d\n", t1,t2,fprep);
+        (*tab_notes)[i] = frequency_to_note_number(fprep);
+        (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
+        i++;
+        (*nb_notes_jouees)++;
+        
+        printf("\n\n");
 
         t1 = t1 + tau;
         t2 = t2 + tau;
     }
+
     printf("Test1");
     free(tab_temps);
     printf("Test2");
@@ -392,106 +429,102 @@ void draw_faded_rectangle(SDL_Renderer *renderer,int x, int y,int width, int r,i
 void draw_rect(SDL_Renderer *renderer,int x, int y,int width,int height, int r,int g, int b)
 {
     /* Dessine un rectangle centré en x,y de largeur width, de hauteur height, de couleur r,g,b*/
-    int h = WINDOW_HEIGHT/10;
     for (int i = x-width/2; i < x+width/2;i++){
-        for(int j=y-h/2; j<y+h/2;j++){
+        for(int j=y-height/2; j<y+height/2;j++){
             if (SDL_SetRenderDrawColor(renderer,r,g,b,SDL_ALPHA_OPAQUE))
                 SDL_ExitWithError("Impossible de changer la couleur pour le rendu");
             if (SDL_RenderDrawPoint(renderer, i , j) != 0)
                 SDL_ExitWithError("Impossible de dessiner un point");
-
         }
     }
 }
 
+int is_white_note(int numero_note){
+    switch (numero_note % 12) {
+        case 0:
+        case 2:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+            return 1;
+            break;
+        case 1:
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+            return 0;
+            break;
+        default:
+            return -1;
+            break;
+    }
+}
+
+int x_pos_of_note(int numero_note, int largeur_note_blanche, int largeur_note_noire){
+    int nb_white_note_before = 0;
+    for (int i = 0; i < numero_note; i++){
+        if (is_white_note(i)==1){ nb_white_note_before++;}
+    }
+    if (is_white_note(numero_note)==1){return(largeur_note_blanche*nb_white_note_before+largeur_note_blanche/2);}
+    else{return(largeur_note_blanche*nb_white_note_before);}
+}
 
 void update_renderer(SDL_Renderer *renderer, int t, int* tab_temps, int* tab_notes, int indice_derniere_note_en_cours,int animation_time,int nb_notes)
 {
     int largeur_note_blanche = WINDOW_WIDTH/52; //Il y'a 52 touches blanches sur un piano
     int hauteur_note_blanche = WINDOW_HEIGHT/10;
     int largeur_note_noire = largeur_note_blanche/2; //les touches noires sont un peu plus petites que les blanches
-    int hauteur_note_noire = 2/3*hauteur_note_blanche; //et plus courtes
+    int hauteur_note_noire = hauteur_note_blanche*3./4; //et plus courtes
 
-
-
-    //On dessine toutes les notes blanche
-        for(int j=0; j<52; j++)
-        {   
-            int x = largeur_note_blanche*j+largeur_note_blanche/2;
+    //On dessine toutes les notes blanches puis dans un second temps les notes noirs pour qu'elles soient dessinés par dessus:
+    for (int i=0; i<87; i++){
+        int x = x_pos_of_note(i, largeur_note_blanche, largeur_note_noire);
+        if(is_white_note(i)){
             draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,255,255);
         }
-    //on dessine toutes les notes noires
-        int xj_noir = largeur_note_blanche; //Sur un piano il y a toujours une première touche noire seule au début
-        draw_rect(renderer,xj_noir,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_noire,hauteur_note_noire,0,0,0);
-        xj_noir = 2*largeur_note_blanche;
-        int compteur = 1;   //dans un piano il y a soit deux bandes noires pour 3 blanches, soit 3 noires pour 4 blanches, on va traiter ces 2 cas
-        int j = 0;
-        while(j<36)   //se finit bien
-        {
-            if (compteur == 1)
-            {
-                for(int k = 1; k<3;++k)
-                {
-                    ++j;
-                    xj_noir = xj_noir + largeur_note_blanche;
-                    draw_rect(renderer,xj_noir,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_noire,hauteur_note_noire,0,0,0);
-                }
-                xj_noir += largeur_note_blanche;
-                compteur = 2;
-            }
-
-            if (compteur == 2)
-            {
-                for(int k = 1; k<4;++k)
-                {
-                    ++j;
-                    xj_noir = xj_noir + largeur_note_blanche;
-                    draw_rect(renderer,xj_noir,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_noire,hauteur_note_noire,0,0,0);
-                }
-                xj_noir += largeur_note_blanche;
-                compteur = 1;
-            }
-            
+    }
+    for (int i=0; i<87; i++){
+        int x = x_pos_of_note(i, largeur_note_blanche, largeur_note_noire);
+        if(is_white_note(i)==0){
+            draw_rect(renderer,x,WINDOW_HEIGHT - hauteur_note_noire/2 - (hauteur_note_blanche-hauteur_note_noire),largeur_note_noire,hauteur_note_noire,20,20,20);
         }
+    }
     
     //Notes en cours d'animation
     int i = indice_derniere_note_en_cours;
     while((tab_temps[i] < t)&(i < nb_notes))
     {   //La note i est en cours d'animation... et (t-tab_temps[i])/animation_time permet de situer où elle en est exactement dans son animation
-        if(tab_notes[i] == 2 || (tab_notes[i]-3)%12 == 2 || (tab_notes[i]-3)%12 == 4 || (tab_notes[i]-3)%12 == 7 || (tab_notes[i]-3)%12 == 9 || (tab_notes[i]-3)%12 == 11) //pour les notes noires
-        {
-            int x =  largeur_note_blanche/2*(tab_notes[i]+1+(tab_notes[i]-3)/12);
-            int y = (WINDOW_HEIGHT-hauteur_note_blanche)*(t-tab_temps[i])/animation_time;
+        int x =  x_pos_of_note(tab_notes[i], largeur_note_blanche, largeur_note_noire);
+        int y = (WINDOW_HEIGHT-hauteur_note_blanche)*(t-tab_temps[i])/animation_time;
 
-            //Plus tard on pourra changer la couleur (ici c'est du cyan), en fonction de la note joué par exemple.
-            draw_faded_rectangle(renderer,x,y,largeur_note_blanche,0,255,255,0,0,0);
+        int isWhiteNote = is_white_note(tab_notes[i]);
 
-            if ((tab_temps[i] + animation_time - t) < 300){draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,200,200);}
-            else {draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,255,255);}
-            if (SDL_RenderDrawPoint(renderer, x , y) != 0)
-            {
-                SDL_ExitWithError("Impossible de dessiner un point");
+        if(isWhiteNote == 1){
+            if((tab_temps[i] + animation_time - t) > 300){
+                draw_faded_rectangle(renderer,x,y,largeur_note_blanche,255,0,0,0,0,0);
             }
-            i++;
-        }
-        else //pour les notes blanches
-        {
-            int x =  largeur_note_blanche/2*(tab_notes[i]+1+(tab_notes[i]-3)/12)+largeur_note_blanche/2;
-            if(tab_notes[i]%12>5){x += largeur_note_blanche/2;}
-            int y = (WINDOW_HEIGHT-hauteur_note_blanche)*(t-tab_temps[i])/animation_time;
-
-            //Plus tard on pourra changer la couleur (ici c'est du rouge), en fonction de la note joué par exemple.
-            draw_faded_rectangle(renderer,x,y,largeur_note_blanche,255,0,0,0,0,0);
-
-            if ((tab_temps[i] + animation_time - t) < 300){draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,200,200);}
-            else {draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,255,255);}
-            if (SDL_RenderDrawPoint(renderer, x , y) != 0)
-            {
-                SDL_ExitWithError("Impossible de dessiner un point");
+            else{
+                draw_rect(renderer,x,WINDOW_HEIGHT-hauteur_note_blanche/2,largeur_note_blanche,hauteur_note_blanche,255,200,200);
+                for (int i=0; i<87; i++){
+                    int x = x_pos_of_note(i, largeur_note_blanche, largeur_note_noire);
+                    if(is_white_note(i)==0){
+                        draw_rect(renderer,x,WINDOW_HEIGHT - hauteur_note_noire/2 - (hauteur_note_blanche-hauteur_note_noire),largeur_note_noire,hauteur_note_noire,20,20,20);
+                    }
+                }
             }
-            i++;
         }
-
+        if(isWhiteNote==0){
+            if((tab_temps[i] + animation_time - t) > 300){
+                draw_faded_rectangle(renderer,x,y,largeur_note_noire,0,0,255,0,0,0);
+            }
+            else{
+            draw_rect(renderer,x,WINDOW_HEIGHT - hauteur_note_noire/2 - (hauteur_note_blanche-hauteur_note_noire),largeur_note_noire,hauteur_note_noire,100,100,200);
+            }
+        }
+        i++;
     }
 }
 
@@ -629,8 +662,8 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audi
 
 int main(int argc, char* argv[]){
 
-    int* tab_temps_notes = malloc(sizeof(int)*1000);
-    int* tab_notes = malloc(sizeof(int)*1000);
+    int* tab_temps_notes = malloc(sizeof(int)*10000);
+    int* tab_notes = malloc(sizeof(int)*10000);
     int nb_notes_jouees;
 
     //Lecture et enregistrement des notes jouees

@@ -234,18 +234,361 @@ void coupe_bande(int nb_data, double* tab_amplitude_frequenciel, float fprep, fl
 
 /*--------  fonction frequence_to_note  ----------*/
 
-int frequency_to_note_number(int frequency) {
-    float A4_frequency = 440.0; // A4 has a frequency of 440 Hz
-    float C0_frequency = A4_frequency * pow(2.0, -4.75); // C0 has a frequency of about 16.35 Hz
 
-    float half_steps_above_c0 = log2(frequency / C0_frequency) * 12.0;
-    int note_number = round(half_steps_above_c0);
+int frequency_to_note_number(int freq){
+    /*Fonction en escalier qui convertit les fréquences en note (numéro de touche du piano)*/
 
-    return note_number;
+if (freq < 28){
+return 0;
 }
+else{
+if (freq <30){
+return 1;
+}
+else{
+if (freq < 31){
+return 2;
+}
+else{
+if (freq < 33){
+return 3;
+}
+else{
+if (freq < 35){
+return 4;
+}
+else{
+if (freq < 37){
+return 5;
+}
+else{
+if (freq < 39){
+return 6;
+}
+else{
+if (freq < 42){
+return 7;
+}
+else{
+if (freq < 44){
+return 8;
+}
+else{
+if (freq < 47){
+return 9;
+}
+else{
+if (freq < 49){
+return 10;
+}
+else {
+if (freq < 52){
+return 11;
+}
+else{
+if (freq < 56){
+return 12;
+}
+else {
+if (freq < 59){
+return 13;
+}
+else{
+if (freq < 62){
+return 14;
+}
+else{
+if (freq < 66){
+return 15;
+}
+else{
+if (freq < 70){
+return 16;
+}
+else {
+if (freq < 74){
+return 17;
+}
+else{
+if (freq < 78){
+return 18;
+}
+else{
+if (freq < 83){
+return 20;
+}
+else{
+
+if (freq < 88){
+return 21;
+}
+else {
+if (freq < 93){
+return 22;
+}
+else{
+if (freq < 104){
+return 23;
+}
+else{
+if (freq < 111){
+return 24;
+}
+else{
+if (freq < 117){
+return 25;
+}
+else{
+if (freq < 124){
+return 26;
+}
+else {
+if (freq < 131){
+return 27;
+}
+else {
+if (freq < 139){
+return 28;
+}
+else {
+if (freq < 147){
+return 29;
+}
+else{
+if (freq < 160){
+return 30;
+}
+else{
+if (freq < 169){
+return 31;
+}
+else{
+if (freq < 179){
+return 32;
+}
+else{
+if (freq < 189){
+return 33;
+}
+else{
+if (freq < 200){
+return 34;
+}
+else{
+if (freq < 215){
+return 35;
+}
+else{
+if (freq < 228){
+return 36;
+}
+else{
+if (freq < 240){
+return 37;
+}
+else{
+if (freq < 255){
+return 38;
+}
+else{
+if (freq < 269){
+return 39;
+}
+else{
+if (freq < 284){
+return 40;
+}
+else{
+if (freq < 302){
+return 41;
+}
+else{
+if (freq < 320){
+return 42;
+}
+else{
+if (freq < 340){
+return 43;
+}
+else{
+if (freq < 355){
+return 44;
+}
+else{
+if (freq < 385){
+return 45;
+}
+else{
+if (freq < 405){
+return 46;
+}
+else{
+if (freq < 430){
+return 47;
+}
+else{
+if (freq < 450){
+return 48;
+}
+else{
+if (freq < 480){
+return 49;
+}
+else{
+if (freq < 510){
+return 50;
+}
+else{
+if (freq < 540){
+return 51;
+}
+else {
+if (freq < 565){
+return 52;
+}
+else {
+if (freq < 605){
+return 53;
+}
+else{
+if (freq < 640){
+return 54;
+}
+else{
+if (freq < 675){
+return 55;
+}
+else{
+if (freq < 720){
+return 56;
+}
+else{
+if (freq < 760){
+return 57;
+}
+else{
+if (freq < 805){
+return 58;
+}
+else {
+if (freq < 850){
+return 59;
+}
+else{
+if (freq < 900){
+return 60;
+}
+else{
+if (freq < 955){
+return 61;
+}
+else{
+if (freq < 1020){
+return 62;
+}
+else{
+if (freq < 1075){
+return 63;
+}
+else{
+if (freq < 1130){
+return 64;
+}
+else{
+if (freq < 1205){
+return 65;
+}
+else{
+if (freq < 1285){
+return 66;
+}
+else{
+if (freq < 1355){
+return 67;
+}
+else{
+if (freq < 1435){
+return 68;
+}
+else{
+if (freq < 1515){
+return 69;
+}
+else{
+if (freq < 1610){
+return 70;
+}
+else{
+if (freq < 1710){
+return 71;
+}
+else{
+if (freq < 1810){
+return 72;
+}
+else{
+if (freq < 1920){
+return 73;
+}
+else{
+if (freq < 2015){
+return 74;
+}
+else{
+if (freq < 2150){
+return 75;
+}
+else{
+if (freq < 2290){
+return 76;
+}
+else{
+if (freq < 2400){
+return 77;
+}
+else{
+if (freq < 2575){
+return 78;
+}
+else{
+if (freq < 2700){
+return 79;
+}
+else{
+if (freq < 2850){
+return 80;
+}
+else{
+if (freq < 3050){
+return 81;
+}
+else{
+if(freq < 3240){
+return 82;
+}
+else{
+if(freq < 3450){
+return 83;
+}
+else{
+if (freq < 3650){
+return 84;
+}
+else{
+if (freq < 3840){
+return 85;
+}
+else{
+if (freq < 4050){
+    return 86;
+}
+else{
+    return 87;
+}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
 
 /*--------  fonction piano_audio_to_piano_notes  ----------*/
 
+/*
 void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, int** tab_notes, int* nb_notes_jouees){
 
     FILE *wav = fopen(nom_fichier_audio,"rb");
@@ -356,7 +699,7 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, i
         int new_fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
         printf(" new_fprep = %d, ",new_fprep);
         if (t1 > 0){
-            if (fprep != -1 && ((new_fprep % fprep < 10) || fabs(fprep - (new_fprep % fprep)) < 10)){
+            if (new_fprep != -1 && fprep != -1 && ((new_fprep % fprep < 10) || fabs(fprep - (new_fprep % fprep)) < 10)){
                 //Alors on a surement une erreur de détection de la première harmonique mais c'est la même fréquence qui est joué qu'avant
                 new_fprep = fprep;
             }
@@ -366,17 +709,138 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, i
 
         // Mise des notes dans le tableau
         printf("  [t1,t2] = [%f,%f],  fprep = %d\n", t1,t2,fprep);
-        (*tab_notes)[i] = frequency_to_note_number(fprep);
-        (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
-        i++;
-        (*nb_notes_jouees)++;
-        
-        printf("\n\n");
+        if (fprep != -1){
+            (*tab_notes)[i] = frequency_to_note_number(fprep);
+            (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
+            i++;
+            (*nb_notes_jouees)++;
+            
+            printf("\n\n");
 
+        }
         t1 = t1 + tau;
         t2 = t2 + tau;
     }
 
+    printf("Test1");
+    free(tab_temps);
+    printf("Test2");
+    free(amplitude_fenetree);
+    printf("Test3");
+    free(amplitude_fourier);
+    printf("Test4");
+    free(tab_frequence);
+    printf("Test5");
+    free(tab_amplitude);
+    printf("Test6");
+}
+
+*/
+
+void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, int** tab_notes, int* nb_notes_jouees){
+
+    FILE *wav = fopen(nom_fichier_audio,"rb");
+    printf("\n nom_fichier : %s\n", nom_fichier_audio);
+    int len_tab;
+    float Fe;
+    nb_data_Fe(wav, &len_tab, &Fe);
+    printf("\n nombre d'echantillons et frequence : %d, %f\n\n",len_tab,Fe);
+    if (len_tab == -1){
+        printf("Erreur de lecture\n");
+        *tab_temps_notes = NULL;
+        *tab_notes = NULL;
+        return ;
+    }
+
+    //  RECUPERATION DES TEMPS D'ECHANTILLONAGE ET DES AMPLITUDES ASSOCIEES
+    float* tab_temps = malloc(sizeof(float) * len_tab);
+    short* tab_amplitude = malloc(sizeof(int) * len_tab);
+    if (tab_temps == NULL || tab_amplitude == NULL){
+        printf("Données trop volumineuses\n");
+        *tab_temps_notes = NULL;
+        *tab_notes = NULL;
+        return ;
+    }
+    wav = fopen(nom_fichier_audio,"rb");
+    rempli_tab(wav, tab_temps, tab_amplitude);
+
+
+    // Boucle de traitement : fenetrage, transformée de fourier, fréquence détectée
+    float T_total = len_tab/Fe; // durée de l'enregistrement
+    float tau = 0.1;       // pas de décalage temporel entre 2 fenêtres (en secondes)
+    float t1 = 0;
+    float t2 = t1 + tau;
+    // float* tab_frequence = malloc(sizeof(float)*len_tab);
+    // short* amplitude_fenetree = malloc(sizeof(short)*len_tab);
+    // double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);          // La fonction Transformee_Fourier ne s'applique que sur des tableaux de double et ces tableaux sont composés de nombres complexes d'où le 2*sizeof(double)*len_tab.
+    // printf("test apres les mallocs pour les tab fenetrees\n");
+
+    float* tab_frequence = malloc(sizeof(float)*len_tab);
+    if (tab_frequence == NULL) {
+        printf("Erreur : impossible d'allouer de la mémoire pour tab_frequence\n");
+        exit(1);
+    }
+    // printf("malloc tab_frequence reussie\n");
+
+
+    short* amplitude_fenetree = malloc(sizeof(int)*len_tab);
+    if (amplitude_fenetree == NULL) {
+        printf("Erreur : impossible d'allouer de la mémoire pour amplitude_fenetree\n");
+        exit(1);
+    }
+    // printf("malloc amplitude_fenetree reussie\n");
+
+    double* amplitude_fourier = malloc(2*sizeof(double)*len_tab);
+    if (amplitude_fourier == NULL) {
+        printf("Erreur : impossible d'allouer de la mémoire pour amplitude_fourier\n");
+        exit(1);
+    }
+    // printf("malloc amplitude_fourrier reussie\n");
+
+// Vérification : affiche un message si l'allocation de mémoire a réussi
+// printf("Allocation de mémoire réussie pour les tableaux\n");
+
+    int i = 0;
+    *nb_notes_jouees = 0;
+    printf("Test0");
+    while (t2<T_total)
+    {
+
+        // Fenetrage
+        // printf("Test avant fenetrage_haming");
+        fenetrage_hamming(tab_amplitude, amplitude_fenetree, len_tab, Fe, t1, t2);
+        // printf("Test apres fenetrage_haming");
+
+        // Transformée de fourier
+        // printf("Test avant fourierTranform");
+        FourierTransform(amplitude_fenetree, len_tab, amplitude_fourier);
+        // Détection de la fréquence
+        int H = 5; // nombre d'harmoniques qu'on étudie
+        float seuil = 33; //seuil en dB pour l'étude des fréquences
+        int new_fprep = frequence_preponderante(amplitude_fourier,Fe,seuil,H,len_tab);
+        printf(" new_fprep = %d, ",new_fprep);
+        int fprep;
+        if (t1 > 0){
+            if (new_fprep != -1 && fprep != -1 && ((new_fprep % fprep < 10) || fabs(fprep - (new_fprep % fprep)) < 10)){
+                //Alors on a surement une erreur de détection de la première harmonique mais c'est la même fréquence qui est joué qu'avant
+                new_fprep = fprep;
+            }
+        }
+        fprep = new_fprep;
+
+        // Mise des notes dans le tableau
+        if (fprep != -1){
+            int note = frequency_to_note_number(fprep);
+            (*tab_notes)[i] = note;
+            printf("  [t1,t2] = [%f,%f],  fprep = %d, note=%d\n\n\n", t1,t2,fprep,note);
+            (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
+            i++;
+            (*nb_notes_jouees)++;
+        }
+
+        t1 = t1 + tau;
+        t2 = t1 + tau;
+    }
     printf("Test1");
     free(tab_temps);
     printf("Test2");
@@ -669,10 +1133,10 @@ int main(int argc, char* argv[]){
     //Lecture et enregistrement des notes jouees
     piano_audio_to_piano_note("test_audio.wav", &tab_temps_notes, &tab_notes, &nb_notes_jouees);
 
-    printf("nombre de notes jouees : %d\n",nb_notes_jouees);
-    for(int i=0; i<nb_notes_jouees; i++){
-        printf("%d,%d \n", tab_temps_notes[i], tab_notes[i]);
-    }
+    // printf("nombre de notes jouees : %d\n",nb_notes_jouees);
+    // for(int i=0; i<nb_notes_jouees; i++){
+    //     printf("%d,%d \n", tab_temps_notes[i], tab_notes[i]);
+    // }
 
 
     //Affichage graphique

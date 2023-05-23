@@ -200,9 +200,9 @@ int frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int
     float amp_max = seuil;
     int f;
     float prod_spec;
-    for(int k = 40*(242765./44100); k < (len_tab/H) ;k++) //C'est la première fréquence audible tel que (k/len_tab)*Fe > 20Hz
+    for(int k = 40*(len_tab/Fe); k < (len_tab/H) ;k++) //C'est la première fréquence audible tel que (k/len_tab)*Fe > 20Hz
     {
-        f = floor(k*Fe/len_tab);
+        f = fabs(floor(k*Fe/len_tab));
         prod_spec = 1;
         for (int i = 1; i <= H; i++)        // On indice de 1 à H compris pour prendre en compte le fondamental
         {
@@ -216,8 +216,8 @@ int frequence_preponderante(double* tab_amplitude,int Fe,float seuil, int H, int
             fprep = f;
         }
     }
-    if (fprep == -1){printf("Il ne s'est rien passe\n");}
-    printf("H=%d, prod = %f, seuil =%f",H, amp_max, seuil);
+    if (fprep < -1){printf("Il ne s'est rien passe\n");}
+    printf("H=%d,freq_detectee = %d, prod = %f, seuil =%f\n",H, fprep, amp_max, seuil);
     return (fprep); 
 }
 
@@ -387,7 +387,7 @@ if (freq < 240){
 return 37;
 }
 else{
-if (freq < 255){
+if (freq < 252){
 return 38;
 }
 else{
@@ -830,7 +830,8 @@ void piano_audio_to_piano_note(char* nom_fichier_audio, int** tab_temps_notes, i
 
         // Mise des notes dans le tableau
         if (fprep != -1){
-            int note = frequency_to_note_number(fprep);
+            //Après des testes on a constaté que les fréquences détectés par la transformés était en moyenne supérieur de 20Hz à la fréquence de la vraoe note
+            int note = frequency_to_note_number(fprep-30);
             (*tab_notes)[i] = note;
             printf("  [t1,t2] = [%f,%f],  fprep = %d, note=%d\n\n\n", t1,t2,fprep,note);
             (*tab_temps_notes)[i] = floor(1000 * (t1 + t2)/2); //Tableau en milisecondes 
@@ -1126,21 +1127,22 @@ void piano_notes_to_video(int* tab_temps,int* tab_notes,int nb_notes, char* audi
 
 int main(int argc, char* argv[]){
 
+    if (argc < 2){
+        printf("Wrong number of argument\n");
+        return 1;
+    }
+    char* audio_file_name = argv[1];
+    printf("transcripting %s\n",audio_file_name);
+
     int* tab_temps_notes = malloc(sizeof(int)*10000);
     int* tab_notes = malloc(sizeof(int)*10000);
     int nb_notes_jouees;
 
     //Lecture et enregistrement des notes jouees
-    piano_audio_to_piano_note("test_audio.wav", &tab_temps_notes, &tab_notes, &nb_notes_jouees);
-
-    // printf("nombre de notes jouees : %d\n",nb_notes_jouees);
-    // for(int i=0; i<nb_notes_jouees; i++){
-    //     printf("%d,%d \n", tab_temps_notes[i], tab_notes[i]);
-    // }
-
+    piano_audio_to_piano_note(audio_file_name, &tab_temps_notes, &tab_notes, &nb_notes_jouees);
 
     //Affichage graphique
-    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees, "test_audio.wav");
+    piano_notes_to_video(tab_temps_notes, tab_notes, nb_notes_jouees, audio_file_name);
 
     free(tab_temps_notes);
     free(tab_notes);

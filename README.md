@@ -11,8 +11,8 @@ Librairies utilisés :
 ____
 Le projet est donc décomposé en deux grandes fonction : 
 
-> piano_audio_to_piano_note -> renvoie les notes détectés
-> piano_notes_to_video -> affiche la fenêtre SDL et joue les notes détectés et l'audio
+- piano_audio_to_piano_note -> renvoie les notes détectés
+- piano_notes_to_video -> affiche la fenêtre SDL et joue les notes détectés et l'audio
 
 
 
